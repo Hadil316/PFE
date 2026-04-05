@@ -1,0 +1,131 @@
+<div class="w-full h-full p-8 bg-gradient-to-br from-slate-50 via-white to-slate-50 overflow-y-auto">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-10">
+    <div>
+      <h1 class="text-5xl font-black text-slate-900 mb-2">Gestion des Utilisateurs</h1>
+      <p class="text-sm text-slate-500 font-semibold uppercase tracking-widest">Administrez les comptes et les rôles</p>
+    </div>
+    <button (click)="openAddModal()"
+      class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-[11px] rounded-xl hover:shadow-lg transition-all uppercase tracking-wide">
+      + Nouvel utilisateur
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- Table Header - 5 colonnes -->
+    <div class="grid grid-cols-5 gap-6 p-6 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+      <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Utilisateur</div>
+      <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Email</div>
+      <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Rôle</div>
+      <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Statut</div>
+      <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider text-center">Actions</div>
+    </div>
+
+    <!-- Table Rows Dynamique -->
+    <div class="divide-y divide-slate-100">
+      <div *ngFor="let u of users()" class="grid grid-cols-5 gap-6 p-6 items-center hover:bg-slate-50 transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
+            [ngClass]="u.role === 'ADMIN' ? 'bg-purple-600' : u.role === 'RESPONSABLE_ENERGIE' ? 'bg-teal-600' : 'bg-blue-600'">
+            {{ u.username[0].toUpperCase() }}
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-900">{{ u.username }}</p>
+            <p class="text-[8px] text-slate-400 uppercase">{{ getRoleLabel(u.role) }}</p>
+          </div>
+        </div>
+        <div class="text-[10px] text-slate-600 font-semibold">{{ u.email }}</div>
+        <div>
+          <span class="px-3 py-1 rounded-lg text-[9px] font-bold uppercase"
+            [ngClass]="u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : u.role === 'RESPONSABLE_ENERGIE' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'">
+            {{ getRoleLabel(u.role) }}
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+          <span class="text-[9px] font-semibold text-green-600">Actif</span>
+        </div>
+        <div class="flex items-center justify-center gap-2">
+          <button (click)="openEditModal(u)" class="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-600 hover:text-blue-600">✏️</button>
+          <button (click)="askDelete(u.id)" class="p-2 hover:bg-slate-100 rounded-lg transition-all text-slate-600 hover:text-red-600">🗑️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJOUT / EDIT -->
+  <div *ngIf="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl animate-in fade-in duration-500">
+    <div class="bg-white w-full max-w-lg p-16 rounded-[5rem] shadow-2xl border border-white">
+      <h2 class="text-4xl font-black mb-10 text-slate-900 tracking-tighter italic uppercase text-center">
+        {{ isEditMode ? 'Modifier Accès' : 'Nouveau Membre' }}
+      </h2>
+      <div class="space-y-6">
+        <input [(ngModel)]="userForm.username" placeholder="Nom d'utilisateur"
+          class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-slate-900 outline-none focus:ring-4 ring-rose-500/10 transition-all font-bold">
+        <input [(ngModel)]="userForm.email" placeholder="Email Adresse"
+          class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-slate-900 outline-none focus:ring-4 ring-rose-500/10 transition-all font-bold">
+        <div class="relative">
+          <input [(ngModel)]="userForm.password" [type]="passwordVisible ? 'text' : 'password'" placeholder="Mot de passe"
+            class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-slate-900 outline-none focus:ring-4 ring-rose-500/10 transition-all font-bold">
+          <button (click)="passwordVisible = !passwordVisible" class="absolute right-6 top-6 text-slate-300 hover:text-rose-500 text-[10px] font-black uppercase">
+            {{ passwordVisible ? 'Masquer' : 'Afficher' }}
+          </button>
+        </div>
+
+        <!-- Role Selector - 3 rôles : Agent, Responsable, Admin -->
+        <div>
+          <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Rôle</label>
+          <div class="grid grid-cols-3 gap-3">
+            <div (click)="userForm.role = 'UTILISATEUR'"
+              [class.bg-blue-600]="userForm.role === 'UTILISATEUR'"
+              [class.text-white]="userForm.role === 'UTILISATEUR'"
+              [class.bg-slate-100]="userForm.role !== 'UTILISATEUR'"
+              [class.text-slate-600]="userForm.role !== 'UTILISATEUR'"
+              class="cursor-pointer py-4 rounded-2xl text-center font-bold text-sm transition-all">
+              Agent
+            </div>
+            <div (click)="userForm.role = 'RESPONSABLE_ENERGIE'"
+              [class.bg-teal-600]="userForm.role === 'RESPONSABLE_ENERGIE'"
+              [class.text-white]="userForm.role === 'RESPONSABLE_ENERGIE'"
+              [class.bg-slate-100]="userForm.role !== 'RESPONSABLE_ENERGIE'"
+              [class.text-slate-600]="userForm.role !== 'RESPONSABLE_ENERGIE'"
+              class="cursor-pointer py-4 rounded-2xl text-center font-bold text-sm transition-all">
+              Responsable
+            </div>
+            <div (click)="userForm.role = 'ADMIN'"
+              [class.bg-purple-600]="userForm.role === 'ADMIN'"
+              [class.text-white]="userForm.role === 'ADMIN'"
+              [class.bg-slate-100]="userForm.role !== 'ADMIN'"
+              [class.text-slate-600]="userForm.role !== 'ADMIN'"
+              class="cursor-pointer py-4 rounded-2xl text-center font-bold text-sm transition-all">
+              Admin
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-4 mt-12">
+        <button (click)="saveUser()" class="flex-[2] bg-slate-900 text-white py-6 rounded-[2rem] font-black transition-all uppercase text-[11px] tracking-widest hover:bg-rose-600">Enregistrer</button>
+        <button (click)="showModal = false" class="flex-1 bg-slate-100 py-6 rounded-[2rem] font-bold text-slate-400 uppercase text-[10px] tracking-widest">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRM DELETE -->
+  <div *ngIf="showDeleteModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl">
+    <div class="bg-white p-10 rounded-3xl shadow-lg text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+        <span class="text-3xl">🗑️</span>
+      </div>
+      <p class="mb-6 font-bold text-slate-900">Êtes-vous sûr de vouloir supprimer cet utilisateur ?</p>
+      <div class="flex justify-center gap-4">
+        <button (click)="confirmDelete()" class="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all">Supprimer</button>
+        <button (click)="showDeleteModal = false" class="px-6 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-all">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+</div>

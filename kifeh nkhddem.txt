@@ -1,0 +1,47 @@
+--khaddem server:
+cd server
+npm run start:dev // ken teblooka : Get-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force
+--khddem client 'interface'
+cd client
+ng serve
+--khddem simulateur
+cd server
+node simulator.js
+--khddem drizel 'lien BD'
+cd server
+npx drizzle-kit studio
+--ndiposi ala git 
+git add .
+git commit -m "Fin de la Hiérarchie 5 niveaux et intégration du Simulateur"
+git push origin main
+--nhabbet m git
+f terminal PFE: git pull origin main
+Bima ennou ?????? t-najjem t-koun zadt "bibliothèques" walla "tables" jdod, lazim dima ta3mel hédhom ba3d el pull:
+Rajja3 el packages jdod:
+7ill terminal f wast server w ekteb: npm install
+7ill terminal f wast client w ekteb: npm install
+Synchronizi el Base mte3ek (PostgreSQL):
+7ill terminal f wast server w ekteb dget:
+?? npx drizzle-kit push
+(Heka el tables elli zadt'hom hiya f PC mte3ha y-t-sna3ou 3andek enti dget).
+
+---Awwil ma t-7ill el PC: A3mil git pull origin main (Bech tekhou a7sen version mta3 el koud).
+Akhdem khedmtek: Zid w baddel kima t7eb.
+Ki t-ji bech t-sakkar: A3mil git add . -> git commit -> git push. (Bech hiya t-najjem tekhou khedmtek ghodwa)
+
+----
+plantUML
+
+Frontend Angular
+?
+HTTP GET
+?
+Backend NestJS
+?
+Base données / simulateur
+?
+Retour mesures
+?
+Signal Angular
+?
+UI live

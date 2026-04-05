@@ -1,0 +1,32 @@
+<aside class="w-[280px] bg-[#0b1320] h-screen flex flex-col shadow-2xl border-r border-slate-800">
+  <div class="pt-12 px-6 pb-10 flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl bg-[#0ea5e9] flex items-center justify-center text-white text-2xl shadow-lg">⚡</div>
+    <h1 class="text-2xl font-bold text-white">EMS</h1>
+  </div>
+
+  <nav class="flex-1 px-4 space-y-3">
+    <button (click)="navigateTo('dashboard')" 
+            [class.bg-[#0ea5e9]]="activeButton() === 'overview'"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-300 hover:text-white transition-all">
+      📊 Overview
+    </button>
+
+    <button (click)="navigateTo('hierarchy')" 
+            [class.bg-[#0ea5e9]]="activeButton() === 'hierarchy'"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-300 hover:text-white transition-all">
+      🌳 Hiérarchie
+    </button>
+
+    <button *ngIf="authService.isAdmin()" (click)="navigateTo('users')" 
+            [class.bg-[#0ea5e9]]="activeButton() === 'users'"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-300 hover:text-white transition-all">
+      👥 Utilisateurs
+    </button>
+  </nav>
+
+  <div class="p-6 border-t border-slate-800">
+    <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl font-bold transition-all">
+      🚪 Déconnexion
+    </button>
+  </div>
+</aside>
