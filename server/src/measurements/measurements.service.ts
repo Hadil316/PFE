@@ -39,15 +39,22 @@ export class MeasurementsService {
     const validData = latestRecords.filter(r => r != null);
     if (validData.length === 0) return null;
 
+    // Agrégation de toutes les colonnes
     const agg = validData.reduce((acc, curr) => ({
-      V1N: acc.V1N + (Number(curr.V1N) || 0),
-      TKW: acc.TKW + (Number(curr.TKW) || 0),
+      V1N: acc.V1N + (Number(curr.V1N) || 0), V2N: acc.V2N + (Number(curr.V2N) || 0), V3N: acc.V3N + (Number(curr.V3N) || 0),
+      V12: acc.V12 + (Number(curr.V12) || 0), V23: acc.V23 + (Number(curr.V23) || 0), V31: acc.V31 + (Number(curr.V31) || 0),
+      I1: acc.I1 + (Number(curr.I1) || 0), I2: acc.I2 + (Number(curr.I2) || 0), I3: acc.I3 + (Number(curr.I3) || 0),
+      HZ: acc.HZ + (Number(curr.HZ) || 0), PF: acc.PF + (Number(curr.PF) || 0),
+      TKW: acc.TKW + (Number(curr.TKW) || 0), IKWH: acc.IKWH + (Number(curr.IKWH) || 0),
       count: acc.count + 1
-    }), { V1N: 0, TKW: 0, count: 0 });
+    }), { V1N:0, V2N:0, V3N:0, V12:0, V23:0, V31:0, I1:0, I2:0, I3:0, HZ:0, PF:0, TKW:0, IKWH:0, count:0 });
 
     return {
-      V1N: (agg.V1N / agg.count).toFixed(1),
-      TKW: agg.TKW.toFixed(2),
+      V1N: (agg.V1N / agg.count).toFixed(1), V2N: (agg.V2N / agg.count).toFixed(1), V3N: (agg.V3N / agg.count).toFixed(1),
+      V12: (agg.V12 / agg.count).toFixed(1), V23: (agg.V23 / agg.count).toFixed(1), V31: (agg.V31 / agg.count).toFixed(1),
+      I1: (agg.I1 / agg.count).toFixed(2), I2: (agg.I2 / agg.count).toFixed(2), I3: (agg.I3 / agg.count).toFixed(2),
+      HZ: (agg.HZ / agg.count).toFixed(2), PF: (agg.PF / agg.count).toFixed(2),
+      TKW: agg.TKW.toFixed(2), IKWH: agg.IKWH.toFixed(2),
       timestamp: validData[0].timestamp
     };
   }
@@ -61,46 +68,20 @@ export class MeasurementsService {
         for (const child of children) { ids = [...ids, ...getAllDescendantIds(child.id)]; }
         return ids;
       };
-
       const targetIds = getAllDescendantIds(assetId);
-      
-      // SECURITÉ 1 : Si aucun ID trouvé, on renvoie un tableau vide au lieu de faire planter SQL
       if (!targetIds || targetIds.length === 0) return [];
-
       const startDate = new Date();
-      let interval = 'hour'; // Par défaut pour 'day'
+      let interval = 'hour';
+      if (period === 'week' || period === 'month') { startDate.setDate(startDate.getDate() - (period === 'week' ? 7 : 30)); interval = 'day'; }
+      else { startDate.setDate(startDate.getDate() - 1); }
 
-      if (period === 'week') {
-        startDate.setDate(startDate.getDate() - 7);
-        interval = 'day';
-      } else if (period === 'month') {
-        startDate.setMonth(startDate.getMonth() - 1);
-        interval = 'day';
-      } else {
-        startDate.setDate(startDate.getDate() - 1);
-      }
-
-      // SECURITÉ 2 : Requête avec Cast explicite pour éviter les erreurs de type 500
-      const result = await this.db
-        .select({
+      return await this.db.select({
           time: sql`date_trunc(${interval}, ${schema.measurements.timestamp})`.as('time'),
           avgPower: sql`cast(avg(${schema.measurements.TKW}) as float)`.as('avgPower'),
         })
         .from(schema.measurements)
-        .where(
-          and(
-            inArray(schema.measurements.assetId, targetIds),
-            gte(schema.measurements.timestamp, startDate)
-          )
-        )
-        .groupBy(sql`1`) // Groupement par la 1ère colonne (time)
-        .orderBy(sql`1`);
-
-      return result;
-    } catch (error) {
-      // Pour voir l'erreur réelle dans ton terminal NestJS
-      console.error("ERREUR SQL SPRINT 2:", error);
-      return [];
-    }
+        .where(and(inArray(schema.measurements.assetId, targetIds), gte(schema.measurements.timestamp, startDate)))
+        .groupBy(sql`1`).orderBy(sql`1`);
+    } catch (error) { return []; }
   }
 }

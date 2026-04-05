@@ -17,20 +17,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private zone = inject(NgZone);
   public authService = inject(AuthService);
 
-  // Déclaration en tant que Signal
   selectedAsset = signal<any>(null);
-  
   private monitorInterval: any;
 
   liveData = signal({
-    V1N: '000', V2N: '000', V3N: '000',
-    V12: '000', V23: '000', V31: '000',
-    I1: '0.0', I2: '0.0', I3: '0.0',
-    TKW: '0.00',
-    IKWH: '0.00',
-    HZ: '00.00',
-    PF: '0.00',
-    KVAH: '0.00',
+    V1N: '000', V2N: '000', V3N: '000', V12: '000', V23: '000', V31: '000',
+    I1: '0.0', I2: '0.0', I3: '0.0', TKW: '0.00', IKWH: '0.00', HZ: '00.00', PF: '0.00',
     timestamp: new Date()
   });
 
@@ -49,44 +41,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private resetLiveData() {
     this.liveData.set({
-      V1N: '000', V2N: '000', V3N: '000',
-      V12: '000', V23: '000', V31: '000',
-      I1: '0.0', I2: '0.0', I3: '0.0',
-      TKW: '0.00', IKWH: '0.00', HZ: '00.00', PF: '0.00', KVAH: '0.00',
+      V1N: '000', V2N: '000', V3N: '000', V12: '000', V23: '000', V31: '000',
+      I1: '0.0', I2: '0.0', I3: '0.0', TKW: '0.00', IKWH: '0.00', HZ: '00.00', PF: '0.00',
       timestamp: new Date()
     });
   }
 
   fetchAssetDetails(id: number) {
     const token = this.authService.getToken();
-    if (!token) return;
-
     this.http.get<any>(`http://localhost:3000/assets/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).subscribe({
       next: (res) => this.selectedAsset.set(res),
-      error: (err) => this.selectedAsset.set(null)
+      error: () => this.selectedAsset.set(null)
     });
   }
 
   startMonitoring(id: number) {
     if (this.monitorInterval) clearInterval(this.monitorInterval);
-
     this.monitorInterval = setInterval(() => {
       const token = this.authService.getToken();
-      if (!token) return;
-
       this.http.get<any>(`http://localhost:3000/measurements/latest/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       }).subscribe({
         next: (res) => {
           this.zone.run(() => {
-            if (res) {
-              this.liveData.set({
-                ...res,
-                timestamp: res.timestamp || new Date()
-              });
-            }
+            if (res) this.liveData.set({ ...res, timestamp: res.timestamp || new Date() });
           });
         },
         error: () => this.resetLiveData()
@@ -94,7 +74,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }, 2000);
   }
 
-  ngOnDestroy() {
-    if (this.monitorInterval) clearInterval(this.monitorInterval);
-  }
+  ngOnDestroy() { if (this.monitorInterval) clearInterval(this.monitorInterval); }
 }
