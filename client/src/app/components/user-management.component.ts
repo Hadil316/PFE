@@ -59,8 +59,6 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  
-
   askDelete(id: number) {
     this.userToDeleteId = id;
     this.showDeleteModal = true;
@@ -72,17 +70,53 @@ export class UserManagementComponent implements OnInit {
         .subscribe(() => { this.fetchUsers(); this.showDeleteModal = false; });
     }
   }
-  // Fonction pour afficher le libellé du rôle correctement
-getRoleLabel(role: string): string {
-  switch(role) {
-    case 'ADMIN':
-      return 'Admin';
-    case 'RESPONSABLE_ENERGIE':
-      return 'Responsable';
-    case 'UTILISATEUR':
-      return 'Agent';
-    default:
-      return 'Agent';
+
+  // CORRECTION : Fonction pour afficher le libellé du rôle correctement
+  getRoleLabel(role: string): string {
+    // Convertir en minuscule pour la comparaison (insensible à la casse)
+    const roleLower = (role || '').toLowerCase();
+    
+    switch(roleLower) {
+      case 'admin':
+        return 'Admin';
+      case 'responsable_energie':
+        return 'Resp. Énergie';
+      case 'utilisateur':
+        return 'Agent';
+      default:
+        return role || 'Agent';
+    }
   }
-}
+
+  // CORRECTION : Fonction pour obtenir la classe CSS du rôle
+  getRoleClass(role: string): string {
+    const roleLower = (role || '').toLowerCase();
+    
+    switch(roleLower) {
+      case 'admin':
+        return 'bg-purple-600';
+      case 'responsable_energie':
+        return 'bg-teal-600';
+      case 'utilisateur':
+        return 'bg-blue-600';
+      default:
+        return 'bg-slate-600';
+    }
+  }
+
+  // CORRECTION : Fonction pour obtenir la classe du badge
+  getBadgeClass(role: string): string {
+    const roleLower = (role || '').toLowerCase();
+    
+    switch(roleLower) {
+      case 'admin':
+        return 'bg-purple-100 text-purple-700';
+      case 'responsable_energie':
+        return 'bg-teal-100 text-teal-700';
+      case 'utilisateur':
+        return 'bg-blue-100 text-blue-700';
+      default:
+        return 'bg-slate-100 text-slate-700';
+    }
+  }
 }

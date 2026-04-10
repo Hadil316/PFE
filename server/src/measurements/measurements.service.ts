@@ -39,7 +39,6 @@ export class MeasurementsService {
     const validData = latestRecords.filter(r => r != null);
     if (validData.length === 0) return null;
 
-    // Agrégation de toutes les colonnes
     const agg = validData.reduce((acc, curr) => ({
       V1N: acc.V1N + (Number(curr.V1N) || 0), V2N: acc.V2N + (Number(curr.V2N) || 0), V3N: acc.V3N + (Number(curr.V3N) || 0),
       V12: acc.V12 + (Number(curr.V12) || 0), V23: acc.V23 + (Number(curr.V23) || 0), V31: acc.V31 + (Number(curr.V31) || 0),
@@ -68,20 +67,45 @@ export class MeasurementsService {
         for (const child of children) { ids = [...ids, ...getAllDescendantIds(child.id)]; }
         return ids;
       };
+
       const targetIds = getAllDescendantIds(assetId);
       if (!targetIds || targetIds.length === 0) return [];
-      const startDate = new Date();
-      let interval = 'hour';
-      if (period === 'week' || period === 'month') { startDate.setDate(startDate.getDate() - (period === 'week' ? 7 : 30)); interval = 'day'; }
-      else { startDate.setDate(startDate.getDate() - 1); }
 
-      return await this.db.select({
-          time: sql`date_trunc(${interval}, ${schema.measurements.timestamp})`.as('time'),
+      const startDate = new Date();
+      let sqlTime: any;
+      let groupByInterval: string;
+
+      if (period === 'week') {
+        startDate.setDate(startDate.getDate() - 7);
+        sqlTime = sql`date_trunc('day', ${schema.measurements.timestamp})`;
+        groupByInterval = 'day';
+      } else if (period === 'month') {
+        startDate.setDate(startDate.getDate() - 30);
+        sqlTime = sql`date_trunc('day', ${schema.measurements.timestamp})`;
+        groupByInterval = 'day';
+      } else {
+        // Jour: groupe par heure
+        startDate.setHours(startDate.getHours() - 24);
+        sqlTime = sql`date_trunc('hour', ${schema.measurements.timestamp})`;
+        groupByInterval = 'hour';
+      }
+
+      const results = await this.db.select({
+          time: sqlTime.as('time'),
           avgPower: sql`cast(avg(${schema.measurements.TKW}) as float)`.as('avgPower'),
+          avgVoltage: sql`cast(avg((${schema.measurements.V1N} + ${schema.measurements.V2N} + ${schema.measurements.V3N}) / 3) as float)`.as('avgVoltage'),
+          avgCurrent: sql`cast(avg((${schema.measurements.I1} + ${schema.measurements.I2} + ${schema.measurements.I3}) / 3) as float)`.as('avgCurrent'),
         })
         .from(schema.measurements)
         .where(and(inArray(schema.measurements.assetId, targetIds), gte(schema.measurements.timestamp, startDate)))
-        .groupBy(sql`1`).orderBy(sql`1`);
-    } catch (error) { return []; }
+        .groupBy(sqlTime)
+        .orderBy(sqlTime);
+
+      // Filtrer les valeurs nulles et formater
+      return results.filter(r => r.avgPower !== null && r.avgVoltage !== null && r.avgCurrent !== null);
+    } catch (error) {
+      console.error('Error in findHistory:', error);
+      return [];
+    }
   }
 }

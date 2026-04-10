@@ -14,6 +14,7 @@ export class SidebarComponent implements OnInit {
   private router = inject(Router);
   public authService = inject(AuthService);
   activeButton = signal('overview');
+  showLogoutModal = false; // NOUVEAU : contrôle l'affichage du modal
 
   ngOnInit() {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe((e: any) => {
@@ -27,8 +28,20 @@ export class SidebarComponent implements OnInit {
     this.router.navigate([`/${route}`]);
   }
 
+  // NOUVEAU : Afficher le modal de confirmation
+  showLogoutConfirm() {
+    this.showLogoutModal = true;
+  }
+
+  // NOUVEAU : Fermer le modal sans déconnecter
+  closeLogoutConfirm() {
+    this.showLogoutModal = false;
+  }
+
+  // MODIFIÉ : Ne plus appeler directement le logout, c'est le modal qui l'appelle après confirmation
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+    this.showLogoutModal = false; // Fermer le modal après déconnexion
   }
 }

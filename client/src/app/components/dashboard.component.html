@@ -82,6 +82,8 @@
 
   <!-- Courbe Historique -->
   <div *ngIf="selectedAsset() as asset" class="mt-8">
-    <app-consumption-chart [assetId]="asset.id"></app-consumption-chart>
+    <app-consumption-chart [assetId]="asset.id" [realtimeData]="liveData()"></app-consumption-chart>
   </div>
 </div>
+
+<!-- Canvas caché pour le graphique temps réel (ajouté dans consumption-chart) -->

@@ -28,9 +28,10 @@
     <div class="divide-y divide-slate-100">
       <div *ngFor="let u of users()" class="grid grid-cols-5 gap-6 p-6 items-center hover:bg-slate-50 transition-all">
         <div class="flex items-center gap-3">
+          <!-- Avatar avec la bonne couleur selon le rôle -->
           <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
-            [ngClass]="u.role === 'ADMIN' ? 'bg-purple-600' : u.role === 'RESPONSABLE_ENERGIE' ? 'bg-teal-600' : 'bg-blue-600'">
-            {{ u.username[0].toUpperCase() }}
+            [ngClass]="getRoleClass(u.role)">
+            {{ (u.username || 'U')[0].toUpperCase() }}
           </div>
           <div>
             <p class="text-[11px] font-bold text-slate-900">{{ u.username }}</p>
@@ -39,8 +40,9 @@
         </div>
         <div class="text-[10px] text-slate-600 font-semibold">{{ u.email }}</div>
         <div>
+          <!-- Badge de rôle avec la bonne couleur -->
           <span class="px-3 py-1 rounded-lg text-[9px] font-bold uppercase"
-            [ngClass]="u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : u.role === 'RESPONSABLE_ENERGIE' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700'">
+            [ngClass]="getBadgeClass(u.role)">
             {{ getRoleLabel(u.role) }}
           </span>
         </div>
@@ -95,11 +97,11 @@
               class="cursor-pointer py-4 rounded-2xl text-center font-bold text-sm transition-all">
               Responsable
             </div>
-            <div (click)="userForm.role = 'ADMIN'"
-              [class.bg-purple-600]="userForm.role === 'ADMIN'"
-              [class.text-white]="userForm.role === 'ADMIN'"
-              [class.bg-slate-100]="userForm.role !== 'ADMIN'"
-              [class.text-slate-600]="userForm.role !== 'ADMIN'"
+            <div (click)="userForm.role = 'admin'"
+              [class.bg-purple-600]="userForm.role === 'admin'"
+              [class.text-white]="userForm.role === 'admin'"
+              [class.bg-slate-100]="userForm.role !== 'admin'"
+              [class.text-slate-600]="userForm.role !== 'admin'"
               class="cursor-pointer py-4 rounded-2xl text-center font-bold text-sm transition-all">
               Admin
             </div>

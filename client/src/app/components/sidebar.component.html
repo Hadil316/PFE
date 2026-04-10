@@ -25,8 +25,27 @@
   </nav>
 
   <div class="p-6 border-t border-slate-800">
-    <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl font-bold transition-all">
+    <button (click)="showLogoutConfirm()" class="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl font-bold transition-all">
       🚪 Déconnexion
     </button>
   </div>
 </aside>
+
+<!-- MODAL DE CONFIRMATION DÉCONNEXION -->
+<div *ngIf="showLogoutModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl animate-in fade-in duration-500">
+  <div class="bg-white w-full max-w-md p-10 rounded-3xl shadow-2xl text-center">
+    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+      <span class="text-4xl">🚪</span>
+    </div>
+    <h2 class="text-2xl font-black text-slate-900 mb-3">Déconnexion</h2>
+    <p class="text-slate-500 text-sm mb-8">Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre compte.</p>
+    <div class="flex gap-4">
+      <button (click)="logout()" class="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold transition-all hover:bg-red-700">
+        Oui, déconnecter
+      </button>
+      <button (click)="closeLogoutConfirm()" class="flex-1 bg-slate-100 text-slate-600 py-4 rounded-xl font-bold transition-all hover:bg-slate-200">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>
