@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-// Chemins vers tes services (1 seul niveau ../ car on est dans 'components')
 import { AuthService } from '../services/auth.service';
 import { AssetStateService } from '../services/asset-state.service';
 
@@ -11,8 +10,7 @@ import { AssetStateService } from '../services/asset-state.service';
   selector: 'app-hierarchy',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  // NOM DE FICHIER STANDARD :
-  templateUrl: './hierarchy.component.html' 
+  templateUrl: './hierarchy.component.html'
 })
 export class HierarchyComponent implements OnInit {
   private http = inject(HttpClient);
@@ -20,18 +18,19 @@ export class HierarchyComponent implements OnInit {
   public authService = inject(AuthService);
   public assetState = inject(AssetStateService);
 
-  // Signaux pour les données
   hierarchy = signal<any[]>([]);
   showAssetModal = signal(false);
   isEditAssetMode = signal(false);
   showDeleteAssetModal = signal(false);
   assetToDeleteName = signal('');
   
+  // MODIFICATION : Ajout de webSocketLink ici
   assetForm = signal({ 
     id: null as number | null, 
     name: '', 
     type: 'EQUIPEMENT', 
-    parentId: null as number | null 
+    parentId: null as number | null,
+    webSocketLink: '' 
   });
   
   assetToDeleteId: number | null = null;
@@ -51,22 +50,34 @@ export class HierarchyComponent implements OnInit {
     });
   }
 
-  // LIEN SPRINT 2 : Sélectionner un équipement et envoyer vers le Dashboard (courbes)
   selectAsset(asset: any) {
     this.assetState.setAsset(asset);
     this.router.navigate(['/dashboard'], { queryParams: { id: asset.id } });
   }
 
-  // --- LOGIQUE GESTION (CRUD) ---
   openAdd(parent: any, type: string) {
     this.isEditAssetMode.set(false);
-    this.assetForm.set({ id: null, name: '', type: type, parentId: parent?.id || null });
+    // On réinitialise tout, y compris le lien
+    this.assetForm.set({ 
+      id: null, 
+      name: '', 
+      type: type, 
+      parentId: parent?.id || null, 
+      webSocketLink: '' 
+    });
     this.showAssetModal.set(true);
   }
 
   openEdit(asset: any) {
     this.isEditAssetMode.set(true);
-    this.assetForm.set({ id: asset.id, name: asset.name, type: asset.type, parentId: asset.parentId });
+    // On charge les données existantes, y compris le lien
+    this.assetForm.set({ 
+      id: asset.id, 
+      name: asset.name, 
+      type: asset.type, 
+      parentId: asset.parentId,
+      webSocketLink: asset.webSocketLink || '' 
+    });
     this.showAssetModal.set(true);
   }
 
