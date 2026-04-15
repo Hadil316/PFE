@@ -20,7 +20,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedAsset = signal<any>(null);
   private monitorInterval: any;
 
-  liveData = signal({
+  liveData = signal<any>({
     V1N: '000', V2N: '000', V3N: '000', V12: '000', V23: '000', V31: '000',
     I1: '0.0', I2: '0.0', I3: '0.0', TKW: '0.00', IKWH: '0.00', HZ: '00.00', PF: '0.00',
     timestamp: new Date()
@@ -31,7 +31,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const id = Number(params['id']);
       if (id && !isNaN(id)) {
         this.zone.run(() => {
-          this.resetLiveData();
           this.fetchAssetDetails(id);
           this.startMonitoring(id);
         });
@@ -39,37 +38,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  private resetLiveData() {
-    this.liveData.set({
-      V1N: '000', V2N: '000', V3N: '000', V12: '000', V23: '000', V31: '000',
-      I1: '0.0', I2: '0.0', I3: '0.0', TKW: '0.00', IKWH: '0.00', HZ: '00.00', PF: '0.00',
-      timestamp: new Date()
-    });
-  }
-
   fetchAssetDetails(id: number) {
-    const token = this.authService.getToken();
     this.http.get<any>(`http://localhost:3000/assets/${id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }).subscribe({
-      next: (res) => this.selectedAsset.set(res),
-      error: () => this.selectedAsset.set(null)
-    });
+      headers: { 'Authorization': `Bearer ${this.authService.getToken()}` }
+    }).subscribe(res => this.selectedAsset.set(res));
   }
 
   startMonitoring(id: number) {
     if (this.monitorInterval) clearInterval(this.monitorInterval);
     this.monitorInterval = setInterval(() => {
-      const token = this.authService.getToken();
       this.http.get<any>(`http://localhost:3000/measurements/latest/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).subscribe({
-        next: (res) => {
-          this.zone.run(() => {
-            if (res) this.liveData.set({ ...res, timestamp: res.timestamp || new Date() });
-          });
-        },
-        error: () => this.resetLiveData()
+        headers: { 'Authorization': `Bearer ${this.authService.getToken()}` }
+      }).subscribe(res => {
+        if (res) this.liveData.set({ ...res, timestamp: new Date() });
       });
     }, 2000);
   }

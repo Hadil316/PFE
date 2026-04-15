@@ -13,13 +13,22 @@ import { filter } from 'rxjs/operators';
 export class SidebarComponent implements OnInit {
   private router = inject(Router);
   public authService = inject(AuthService);
+  
   activeButton = signal('overview');
-  showLogoutModal = false; // NOUVEAU : contrôle l'affichage du modal
+  
+  // --- SIGNAL POUR LA MODAL DE DÉCONNEXION ---
+  showLogoutModal = signal(false);
 
   ngOnInit() {
-    this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe((e: any) => {
-      if (e.url.includes('hierarchy')) this.activeButton.set('hierarchy');
-      else if (e.url.includes('users')) this.activeButton.set('users');
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      const url = event.url;
+      if (url.includes('hierarchy')) this.activeButton.set('hierarchy');
+      else if (url.includes('users')) this.activeButton.set('users');
+      else if (url.includes('alerts')) this.activeButton.set('alerts');
+      else if (url.includes('reports')) this.activeButton.set('reports');
+      else if (url.includes('billing')) this.activeButton.set('billing');
       else this.activeButton.set('overview');
     });
   }
@@ -28,20 +37,24 @@ export class SidebarComponent implements OnInit {
     this.router.navigate([`/${route}`]);
   }
 
-  // NOUVEAU : Afficher le modal de confirmation
-  showLogoutConfirm() {
-    this.showLogoutModal = true;
+  // --- MÉTHODES DE DÉCONNEXION APPELÉES PAR LE HTML ---
+  
+  askLogout() {
+    this.showLogoutModal.set(true);
   }
 
-  // NOUVEAU : Fermer le modal sans déconnecter
-  closeLogoutConfirm() {
-    this.showLogoutModal = false;
+  cancelLogout() {
+    this.showLogoutModal.set(false);
   }
 
-  // MODIFIÉ : Ne plus appeler directement le logout, c'est le modal qui l'appelle après confirmation
-  logout() {
+  confirmLogout() {
+    this.showLogoutModal.set(false);
     this.authService.logout();
     this.router.navigate(['/login']);
-    this.showLogoutModal = false; // Fermer le modal après déconnexion
+  }
+
+  logout() {
+    // Gardé par sécurité si appelé ailleurs
+    this.askLogout();
   }
 }

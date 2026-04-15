@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, SimpleChanges, signal, inject, OnDestroy, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, Input, OnChanges, SimpleChanges, signal, inject, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import Chart from 'chart.js/auto';
 
 @Component({
@@ -8,389 +8,157 @@ import Chart from 'chart.js/auto';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm mt-6">
-      <div class="flex justify-between items-center mb-10">
-        <div>
-          <h2 class="text-2xl font-black text-slate-900 tracking-tight">Analyse Énergétique</h2>
-          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Historique consolidé (P, V, I)</p>
+    <div class="space-y-8">
+      <!-- 1. GRAPHIQUE TEMPS RÉEL -->
+      <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter">⚡ Suivi en Direct (P, V, I)</h2>
+          <span class="flex items-center gap-2 text-[10px] font-bold text-emerald-500 animate-pulse">● LIVE MONITORING</span>
         </div>
-        
-        <div class="flex bg-slate-100 p-1.5 rounded-2xl border">
-          <button (click)="setPeriod('day')" [class.bg-white]="period() === 'day'" class="px-6 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm">JOUR</button>
-          <button (click)="setPeriod('week')" [class.bg-white]="period() === 'week'" class="px-6 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm mx-1">SEMAINE</button>
-          <button (click)="setPeriod('month')" [class.bg-white]="period() === 'month'" class="px-5 py-2 rounded-xl text-[10px] font-black transition-all shadow-sm">MOIS</button>
-        </div>
+        <div class="h-[280px] w-full"><canvas #realtimeCanvas></canvas></div>
       </div>
 
-      <div class="grid grid-cols-1 gap-8">
-        <!-- Graphique Temps Réel (EN HAUT) -->
-        <div class="h-[300px] w-full relative">
-          <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">⚡ Temps Réel - Puissance (kW), Moyenne Tension (V) & Moyenne Intensité (A)</p>
-          <canvas id="canvasRealtimeChart"></canvas>
-        </div>
-
-        <!-- Graphique Historique (EN BAS) -->
-        <div class="h-[350px] w-full relative border-t pt-6">
-          <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">📊 Historique (Puissance, Tension, Intensité)</p>
-          <canvas id="canvasMultiChart"></canvas>
-          <div *ngIf="noData()" class="absolute inset-0 flex items-center justify-center bg-white/80">
-            <p class="text-slate-400 font-bold text-sm italic">Collecte des données en cours...</p>
+      <!-- 2. GRAPHIQUE HISTORIQUE -->
+      <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter">📊 Analyse Historique</h2>
+          <div class="flex bg-slate-100 p-1 rounded-xl border">
+            <button (click)="setPeriod('day')" [class.bg-white]="period() === 'day'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all">JOUR</button>
+            <button (click)="setPeriod('week')" [class.bg-white]="period() === 'week'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm mx-1 transition-all">SEMAINE</button>
+            <button (click)="setPeriod('month')" [class.bg-white]="period() === 'month'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all">MOIS</button>
           </div>
         </div>
-      </div>
-
-      <div class="flex justify-center gap-12 mt-10">
-        <div class="flex items-center gap-2"><span class="w-8 h-1 bg-blue-500 rounded-full"></span><span class="text-[10px] font-black text-slate-500 uppercase">Puissance (kW)</span></div>
-        <div class="flex items-center gap-2"><span class="w-8 h-1 bg-amber-400 rounded-full"></span><span class="text-[10px] font-black text-slate-500 uppercase">Tension (V)</span></div>
-        <div class="flex items-center gap-2"><span class="w-8 h-1 bg-emerald-500 rounded-full"></span><span class="text-[10px] font-black text-slate-500 uppercase">Intensité (A)</span></div>
+        <div class="h-[350px] w-full relative">
+           <canvas #historyCanvas></canvas>
+           <div *ngIf="noData()" class="absolute inset-0 flex items-center justify-center bg-white/90">
+             <p class="text-slate-400 font-bold text-sm italic">Collecte des données en cours...</p>
+           </div>
+        </div>
+        <div class="flex justify-center gap-8 mt-6">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Puissance (kW)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-orange-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Tension (V)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Intensité (A)</span></div>
+        </div>
       </div>
     </div>
   `
 })
 export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   @Input() assetId!: number;
-  @Input() realtimeData!: any;
+  @Input() realtimeData!: any; 
+
+  @ViewChild('realtimeCanvas') realtimeCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('historyCanvas') historyCanvas!: ElementRef<HTMLCanvasElement>;
 
   private http = inject(HttpClient);
-  
   period = signal<string>('day');
   noData = signal<boolean>(false);
-  chart: any;
-  realtimeChart: any;
+  
+  private rtChart: any;
+  private histChart: any;
   private refreshInterval: any;
-  private realtimeDataPoints: { time: string, avgPower: number, avgVoltage: number, avgCurrent: number }[] = [];
-  private maxRealtimePoints = 30;
 
   ngOnInit() {
-    this.refreshInterval = setInterval(() => { if (this.assetId) this.fetchData(); }, 60000);
-    this.initRealtimeChart();
+    this.refreshInterval = setInterval(() => { if (this.assetId) this.fetchHistory(); }, 30000);
   }
 
   ngOnDestroy() { 
     if (this.refreshInterval) clearInterval(this.refreshInterval);
-    if (this.chart) this.chart.destroy();
-    if (this.realtimeChart) this.realtimeChart.destroy();
+    if (this.rtChart) this.rtChart.destroy();
+    if (this.histChart) this.histChart.destroy();
   }
 
-  ngOnChanges(changes: SimpleChanges) { 
-    if (changes['assetId'] && this.assetId) this.fetchData();
-    if (changes['realtimeData'] && changes['realtimeData'].currentValue) {
-      this.updateRealtimeChart(changes['realtimeData'].currentValue);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['assetId'] && this.assetId) this.fetchHistory();
+    if (changes['realtimeData'] && this.realtimeData) this.updateRealtimeChart();
+  }
+
+  setPeriod(p: string) {
+    this.period.set(p);
+    this.fetchHistory();
+  }
+
+  private updateRealtimeChart() {
+    if (!this.realtimeCanvas || !this.realtimeData) return;
+    if (!this.rtChart) this.initRealtimeChart();
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    this.rtChart.data.labels.push(time);
+    
+    // CORRECTION : On met à jour les 3 datasets
+    this.rtChart.data.datasets[0].data.push(parseFloat(this.realtimeData.TKW || 0));
+    this.rtChart.data.datasets[1].data.push(parseFloat(this.realtimeData.V1N || 0));
+    this.rtChart.data.datasets[2].data.push(parseFloat(this.realtimeData.I1 || 0));
+    
+    if (this.rtChart.data.labels.length > 20) {
+      this.rtChart.data.labels.shift();
+      this.rtChart.data.datasets.forEach((d: any) => d.data.shift());
     }
+    this.rtChart.update('none');
   }
 
-  setPeriod(p: string) { this.period.set(p); this.fetchData(); }
+  private initRealtimeChart() {
+    this.rtChart = new Chart(this.realtimeCanvas.nativeElement, {
+      type: 'line',
+      data: { labels: [], datasets: [
+        { label: 'Puissance', data: [], borderColor: '#3b82f6', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'y' },
+        { label: 'Tension', data: [], borderColor: '#f59e0b', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'yV' },
+        { label: 'Intensité', data: [], borderColor: '#10b981', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'y' }
+      ]},
+      options: { 
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false } }, 
+        scales: { 
+          x: { display: true, ticks: { font: { size: 9 }, autoSkip: true, maxTicksLimit: 8 } },
+          y: { position: 'left', beginAtZero: true, title: { display: true, text: 'kW / A', font: { size: 10 } } },
+          yV: { position: 'right', min: 0, max: 500, title: { display: true, text: 'Volts', font: { size: 10 } }, grid: { display: false } }
+        } 
+      }
+    });
+  }
 
-  fetchData() {
+  fetchHistory() {
     const token = localStorage.getItem('auth_token');
     this.http.get<any[]>(`http://localhost:3000/measurements/history/${this.assetId}?period=${this.period()}`, {
       headers: { Authorization: `Bearer ${token}` }
-    }).subscribe({
-      next: (res: any[]) => {
-        if (res && res.length > 0) { 
-          this.noData.set(false); 
-          this.initChart(res); 
-        } else { 
-          this.noData.set(true); 
-          if (this.chart) this.chart.destroy(); 
+    }).subscribe((res: any[]) => { 
+        if (res && res.length > 0) {
+            this.noData.set(false);
+            this.initHistoryChart(res); 
+        } else {
+            this.noData.set(true);
+            if (this.histChart) this.histChart.destroy();
         }
-      },
-      error: (err) => {
-        console.error('Error fetching history:', err);
-        this.noData.set(true);
-      }
     });
   }
 
-  initChart(data: any[]) {
+  private initHistoryChart(data: any[]) {
+    if (!this.historyCanvas) return;
     const labels = data.map(d => {
       const date = new Date(d.time);
-      if (this.period() === 'day') {
-        return `${date.getHours()}h${date.getMinutes().toString().padStart(2, '0')}`;
-      } else {
-        return `${date.getDate()}/${date.getMonth() + 1}`;
-      }
+      return this.period() === 'day' ? `${date.getHours()}h:${date.getMinutes()}` : `${date.getDate()}/${date.getMonth() + 1}`;
     });
 
-    if (this.chart) this.chart.destroy();
-
-    this.chart = new Chart('canvasMultiChart', {
+    if (this.histChart) this.histChart.destroy();
+    this.histChart = new Chart(this.historyCanvas.nativeElement, {
       type: 'line',
       data: {
         labels: labels,
         datasets: [
-          {
-            label: 'Puissance (kW)',
-            data: data.map(d => d.avgPower),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.05)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#3b82f6',
-            fill: true,
-            yAxisID: 'y-power'
-          },
-          {
-            label: 'Tension (V)',
-            data: data.map(d => d.avgVoltage),
-            borderColor: '#fbbf24',
-            backgroundColor: 'rgba(251, 191, 36, 0.05)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#fbbf24',
-            fill: true,
-            yAxisID: 'y-voltage'
-          },
-          {
-            label: 'Intensité (A)',
-            data: data.map(d => d.avgCurrent),
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.05)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            pointBackgroundColor: '#10b981',
-            fill: true,
-            yAxisID: 'y-current'
-          }
+          { label: 'Puissance', data: data.map(d => d.avgpower), borderColor: '#3b82f6', borderWidth: 3, tension: 0.4, yAxisID: 'y', pointRadius: 0 },
+          { label: 'Tension', data: data.map(d => d.avgvoltage), borderColor: '#f59e0b', borderWidth: 3, tension: 0.4, yAxisID: 'yV', pointRadius: 0 },
+          { label: 'Intensité', data: data.map(d => d.avgcurrent), borderColor: '#10b981', borderWidth: 3, tension: 0.4, yAxisID: 'y', pointRadius: 0 }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            position: 'top',
-            labels: { font: { size: 11, weight: 'bold' } }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                let label = context.dataset.label || '';
-                let rawValue = context.raw as number;
-                if (rawValue === null || rawValue === undefined) return label;
-                return `${label}: ${rawValue.toFixed(2)}`;
-              }
-            }
-          }
-        },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
         scales: {
-          'y-power': {
-            type: 'linear',
-            position: 'left',
-            title: {
-              display: true,
-              text: 'Puissance (kW)',
-              font: { size: 10, weight: 'bold' },
-              color: '#3b82f6'
-            },
-            grid: { color: '#f8fafc' },
-            ticks: { font: { size: 10 } }
-          },
-          'y-voltage': {
-            type: 'linear',
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Tension (V)',
-              font: { size: 10, weight: 'bold' },
-              color: '#fbbf24'
-            },
-            grid: { drawOnChartArea: false },
-            ticks: { font: { size: 10 }, color: '#fbbf24' },
-            min: 200,
-            max: 250
-          },
-          'y-current': {
-            type: 'linear',
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Intensité (A)',
-              font: { size: 10, weight: 'bold' },
-              color: '#10b981'
-            },
-            grid: { drawOnChartArea: false },
-            ticks: { font: { size: 10 }, color: '#10b981' }
-          },
-          x: {
-            grid: { display: false },
-            ticks: {
-              maxTicksLimit: 12,
-              font: { size: 9 },
-              autoSkip: true
-            },
-            title: {
-              display: true,
-              text: this.period() === 'day' ? 'Heure' : 'Date',
-              font: { size: 10, weight: 'bold' }
-            }
-          }
+          y: { type: 'linear', position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'kW / A' } },
+          yV: { type: 'linear', position: 'right', min: 0, max: 500, grid: { display: false }, title: { display: true, text: 'Volts' } },
+          x: { ticks: { maxTicksLimit: 10 } }
         }
       }
     });
-  }
-
-  initRealtimeChart() {
-    if (this.realtimeChart) this.realtimeChart.destroy();
-    
-    this.realtimeChart = new Chart('canvasRealtimeChart', {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [
-          {
-            label: 'Puissance (kW)',
-            data: [],
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 4,
-            pointBackgroundColor: '#3b82f6',
-            fill: true,
-            yAxisID: 'y-power'
-          },
-          {
-            label: 'Moyenne Tension (V)',
-            data: [],
-            borderColor: '#fbbf24',
-            backgroundColor: 'rgba(251, 191, 36, 0.1)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 4,
-            pointBackgroundColor: '#fbbf24',
-            fill: true,
-            yAxisID: 'y-voltage'
-          },
-          {
-            label: 'Moyenne Intensité (A)',
-            data: [],
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            borderWidth: 3,
-            tension: 0.3,
-            pointRadius: 4,
-            pointBackgroundColor: '#10b981',
-            fill: true,
-            yAxisID: 'y-current'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
-        plugins: { 
-          legend: { 
-            position: 'top',
-            labels: { font: { size: 11, weight: 'bold' } }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                let label = context.dataset.label || '';
-                let rawValue = context.raw as number;
-                if (rawValue === null || rawValue === undefined) return label;
-                let unit = '';
-                if (label.includes('Puissance')) unit = 'kW';
-                else if (label.includes('Tension')) unit = 'V';
-                else if (label.includes('Intensité')) unit = 'A';
-                return `${label}: ${rawValue.toFixed(2)} ${unit}`;
-              }
-            }
-          }
-        },
-        scales: {
-          'y-power': {
-            type: 'linear',
-            position: 'left',
-            title: {
-              display: true,
-              text: 'Puissance (kW)',
-              font: { size: 10, weight: 'bold' },
-              color: '#3b82f6'
-            },
-            grid: { color: '#f8fafc' },
-            ticks: { font: { size: 10 } }
-          },
-          'y-voltage': {
-            type: 'linear',
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Tension (V)',
-              font: { size: 10, weight: 'bold' },
-              color: '#fbbf24'
-            },
-            min: 200,
-            max: 250,
-            grid: { drawOnChartArea: false },
-            ticks: { font: { size: 10 }, color: '#fbbf24' }
-          },
-          'y-current': {
-            type: 'linear',
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Intensité (A)',
-              font: { size: 10, weight: 'bold' },
-              color: '#10b981'
-            },
-            grid: { drawOnChartArea: false },
-            ticks: { font: { size: 10 }, color: '#10b981' }
-          },
-          x: {
-            title: { display: true, text: 'Temps', font: { size: 10, weight: 'bold' } },
-            grid: { display: false },
-            ticks: { maxTicksLimit: 10, font: { size: 9 } }
-          }
-        }
-      }
-    });
-  }
-
-  updateRealtimeChart(data: any) {
-    if (!this.realtimeChart || !data) return;
-    
-    // Puissance
-    const power = parseFloat(data.TKW) || 0;
-    
-    // Moyenne des tensions V1N, V2N, V3N
-    const v1n = parseFloat(data.V1N) || 0;
-    const v2n = parseFloat(data.V2N) || 0;
-    const v3n = parseFloat(data.V3N) || 0;
-    const avgVoltage = (v1n + v2n + v3n) / 3;
-    
-    // Moyenne des intensités I1, I2, I3
-    const i1 = parseFloat(data.I1) || 0;
-    const i2 = parseFloat(data.I2) || 0;
-    const i3 = parseFloat(data.I3) || 0;
-    const avgCurrent = (i1 + i2 + i3) / 3;
-    
-    const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
-    const timeLabel = `${timestamp.getHours()}:${timestamp.getMinutes().toString().padStart(2, '0')}:${timestamp.getSeconds().toString().padStart(2, '0')}`;
-    
-    this.realtimeDataPoints.push({ time: timeLabel, avgPower: power, avgVoltage, avgCurrent });
-    
-    if (this.realtimeDataPoints.length > this.maxRealtimePoints) {
-      this.realtimeDataPoints.shift();
-    }
-    
-    this.realtimeChart.data.labels = this.realtimeDataPoints.map(p => p.time);
-    this.realtimeChart.data.datasets[0].data = this.realtimeDataPoints.map(p => p.avgPower);
-    this.realtimeChart.data.datasets[1].data = this.realtimeDataPoints.map(p => p.avgVoltage);
-    this.realtimeChart.data.datasets[2].data = this.realtimeDataPoints.map(p => p.avgCurrent);
-    
-    this.realtimeChart.update('none');
   }
 }

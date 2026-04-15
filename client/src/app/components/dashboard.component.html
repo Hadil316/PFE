@@ -3,13 +3,17 @@
   <!-- Header -->
   <div class="flex justify-between items-start mb-10">
     <div *ngIf="selectedAsset() as asset">
-      <h1 class="text-4xl font-bold text-slate-900 mb-3">{{ asset.name }}</h1>
+      <h1 class="text-4xl font-bold text-slate-900 mb-3 font-black">{{ asset.name }}</h1>
       <p class="text-slate-500 text-[15px]">État actuel de la consommation énergétique.</p>
+    </div>
+    <div *ngIf="!selectedAsset()">
+      <h1 class="text-4xl font-bold text-slate-900 mb-3">Tableau de Bord Global</h1>
+      <p class="text-slate-500">Veuillez sélectionner un équipement dans la hiérarchie.</p>
     </div>
     <div class="bg-white rounded-full px-6 py-3 shadow-sm border border-slate-100 flex items-center gap-4">
       <div class="text-right">
-        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Dernière mesure</p>
-        <p class="text-lg font-bold text-slate-900">{{ liveData().timestamp | date:'HH:mm:ss' }}</p>
+        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Mise à jour</p>
+        <p class="text-lg font-bold text-slate-900 leading-none">{{ liveData().timestamp | date:'HH:mm:ss' }}</p>
       </div>
       <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">⚡</div>
     </div>
@@ -17,28 +21,28 @@
 
   <!-- Row 1: Indicateurs -->
   <div class="grid grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 relative group hover:shadow-md transition-all">
-      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Puissance Active</p>
+    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 border-b-4 border-blue-500 transition-all hover:shadow-md">
+      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Puissance Active</p>
       <div class="flex items-baseline gap-2">
-        <span class="text-[40px] font-bold text-slate-900 leading-none">{{ liveData().TKW }}</span>
+        <span class="text-[40px] font-black text-slate-900 leading-none">{{ liveData().TKW }}</span>
         <span class="text-sm font-bold text-slate-400">kW</span>
       </div>
     </div>
-    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 relative group hover:shadow-md transition-all">
-      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Énergie Totale</p>
+    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 border-b-4 border-emerald-500 transition-all hover:shadow-md">
+      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Énergie Totale</p>
       <div class="flex items-baseline gap-2">
-        <span class="text-[40px] font-bold text-slate-900 leading-none">{{ liveData().IKWH }}</span>
+        <span class="text-[40px] font-black text-slate-900 leading-none">{{ liveData().IKWH }}</span>
         <span class="text-sm font-bold text-slate-400">kWh</span>
       </div>
     </div>
-    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 relative group hover:shadow-md transition-all">
-      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Power Factor</p>
-      <span class="text-[40px] font-bold text-slate-900 leading-none">{{ liveData().PF }}</span>
+    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 border-b-4 border-amber-500 transition-all hover:shadow-md">
+      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Power Factor</p>
+      <span class="text-[40px] font-black text-slate-900 leading-none">{{ liveData().PF }}</span>
     </div>
-    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 relative group hover:shadow-md transition-all">
-      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Fréquence</p>
+    <div class="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 border-b-4 border-indigo-500 transition-all hover:shadow-md">
+      <p class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Fréquence</p>
       <div class="flex items-baseline gap-2">
-        <span class="text-[40px] font-bold text-slate-900 leading-none">{{ liveData().HZ }}</span>
+        <span class="text-[40px] font-black text-slate-900 leading-none">{{ liveData().HZ }}</span>
         <span class="text-sm font-bold text-slate-400">Hz</span>
       </div>
     </div>
@@ -47,43 +51,48 @@
   <!-- Row 2: Tension & Intensité -->
   <div class="grid grid-cols-5 gap-6">
     <div class="col-span-3 bg-white rounded-[32px] p-10 shadow-sm border border-slate-100">
-      <h2 class="text-2xl font-bold text-slate-900 mb-6">Tension (V)</h2>
+      <h2 class="text-2xl font-bold text-slate-900 mb-6 font-black uppercase tracking-tight">Tension (V)</h2>
       <div class="grid grid-cols-2 gap-8">
         <div class="space-y-4">
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold text-slate-400">V1</span><span class="text-xl font-bold">{{ liveData().V1N }}V</span></div>
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold text-slate-400">V2</span><span class="text-xl font-bold">{{ liveData().V2N }}V</span></div>
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold text-slate-400">V3</span><span class="text-xl font-bold">{{ liveData().V3N }}V</span></div>
+          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl border"><span class="text-xs font-bold text-slate-400">V1</span><span class="text-xl font-bold">{{ liveData().V1N }}V</span></div>
+          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl border"><span class="text-xs font-bold text-slate-400">V2</span><span class="text-xl font-bold">{{ liveData().V2N }}V</span></div>
+          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl border"><span class="text-xs font-bold text-slate-400">V3</span><span class="text-xl font-bold">{{ liveData().V3N }}V</span></div>
         </div>
-        <div class="space-y-4 text-blue-600">
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold opacity-60">U12</span><span class="text-xl font-bold">{{ liveData().V12 }}V</span></div>
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold opacity-60">U23</span><span class="text-xl font-bold">{{ liveData().V23 }}V</span></div>
-          <div class="flex justify-between items-center bg-[#F8FAFC] p-4 rounded-2xl"><span class="text-xs font-bold opacity-60">U31</span><span class="text-xl font-bold">{{ liveData().V31 }}V</span></div>
+        <div class="space-y-4 text-blue-600 font-bold">
+          <div class="flex justify-between items-center bg-blue-50/30 p-4 rounded-2xl border"><span>U12</span><span>{{ liveData().V12 }}V</span></div>
+          <div class="flex justify-between items-center bg-blue-50/30 p-4 rounded-2xl border"><span>U23</span><span>{{ liveData().V23 }}V</span></div>
+          <div class="flex justify-between items-center bg-blue-50/30 p-4 rounded-2xl border"><span>U31</span><span>{{ liveData().V31 }}V</span></div>
         </div>
       </div>
     </div>
-    <div class="col-span-2 bg-white rounded-[32px] p-10 shadow-sm border border-slate-100">
-      <h2 class="text-2xl font-bold text-slate-900 mb-6">Intensité (A)</h2>
-      <div class="space-y-10">
+
+    <div class="col-span-2 bg-white rounded-[32px] p-10 shadow-sm border border-slate-100 flex flex-col">
+      <h2 class="text-2xl font-bold text-slate-900 mb-6 font-black uppercase tracking-tight">Intensité (A)</h2>
+      <div class="flex-1 flex flex-col justify-center space-y-10">
         <div>
-          <div class="flex justify-between text-xs font-bold mb-2"><span>I1</span><span>{{ liveData().I1 }}A</span></div>
-          <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-500" [style.width.%]="56"></div></div>
+          <div class="flex justify-between text-xs font-bold mb-2"><span>I1</span><b>{{ liveData().I1 }}A</b></div>
+          <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-500 rounded-full" [style.width.%]="56"></div>
+          </div>
         </div>
         <div>
-          <div class="flex justify-between text-xs font-bold mb-2"><span>I2</span><span>{{ liveData().I2 }}A</span></div>
-          <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" [style.width.%]="46"></div></div>
+          <div class="flex justify-between text-xs font-bold mb-2"><span>I2</span><b>{{ liveData().I2 }}A</b></div>
+          <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full" [style.width.%]="46"></div>
+          </div>
         </div>
         <div>
-          <div class="flex justify-between text-xs font-bold mb-2"><span>I3</span><span>{{ liveData().I3 }}A</span></div>
-          <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-purple-500" [style.width.%]="49"></div></div>
+          <div class="flex justify-between text-xs font-bold mb-2"><span>I3</span><b>{{ liveData().I3 }}A</b></div>
+          <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-purple-500 rounded-full" [style.width.%]="49"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Courbe Historique -->
-  <div *ngIf="selectedAsset() as asset" class="mt-8">
+  <!-- Graphiques Dynamiques et Historiques -->
+  <div *ngIf="selectedAsset() as asset" class="mt-8 mb-12">
     <app-consumption-chart [assetId]="asset.id" [realtimeData]="liveData()"></app-consumption-chart>
   </div>
 </div>
-
-<!-- Canvas caché pour le graphique temps réel (ajouté dans consumption-chart) -->
