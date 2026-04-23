@@ -10,7 +10,7 @@ import { AssetStateService } from '../services/asset-state.service';
   selector: 'app-hierarchy',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './hierarchy.component.html'
+  templateUrl: './hierarchy.component.html' 
 })
 export class HierarchyComponent implements OnInit {
   private http = inject(HttpClient);
@@ -24,13 +24,13 @@ export class HierarchyComponent implements OnInit {
   showDeleteAssetModal = signal(false);
   assetToDeleteName = signal('');
   
-  // MODIFICATION : Ajout de webSocketLink ici
   assetForm = signal({ 
     id: null as number | null, 
     name: '', 
     type: 'EQUIPEMENT', 
     parentId: null as number | null,
-    webSocketLink: '' 
+    webSocketLink: '',
+    maxCurrent: 80
   });
   
   assetToDeleteId: number | null = null;
@@ -40,7 +40,7 @@ export class HierarchyComponent implements OnInit {
   }
 
   loadHierarchy() {
-    const token = localStorage.getItem('auth_token');
+    const token = this.authService.getToken();
     if (!token) return;
     this.http.get<any[]>('http://localhost:3000/assets/tree', {
       headers: { Authorization: `Bearer ${token}` }
@@ -55,35 +55,31 @@ export class HierarchyComponent implements OnInit {
     this.router.navigate(['/dashboard'], { queryParams: { id: asset.id } });
   }
 
+  // --- FONCTIONS POUR OUVRIR LES MODALS ---
   openAdd(parent: any, type: string) {
     this.isEditAssetMode.set(false);
-    // On réinitialise tout, y compris le lien
     this.assetForm.set({ 
-      id: null, 
-      name: '', 
-      type: type, 
-      parentId: parent?.id || null, 
-      webSocketLink: '' 
+        id: null, name: '', type: type, 
+        parentId: parent?.id || null, 
+        webSocketLink: '', maxCurrent: 80 
     });
     this.showAssetModal.set(true);
   }
 
   openEdit(asset: any) {
     this.isEditAssetMode.set(true);
-    // On charge les données existantes, y compris le lien
     this.assetForm.set({ 
-      id: asset.id, 
-      name: asset.name, 
-      type: asset.type, 
-      parentId: asset.parentId,
-      webSocketLink: asset.webSocketLink || '' 
+      id: asset.id, name: asset.name, type: asset.type, 
+      parentId: asset.parentId, 
+      webSocketLink: asset.webSocketLink || '',
+      maxCurrent: asset.maxCurrent || 80 
     });
     this.showAssetModal.set(true);
   }
 
   saveAsset() {
     const form = this.assetForm();
-    const token = localStorage.getItem('auth_token');
+    const token = this.authService.getToken();
     const options = { headers: { Authorization: `Bearer ${token}` } };
     
     if (this.isEditAssetMode()) {
@@ -106,7 +102,7 @@ export class HierarchyComponent implements OnInit {
   }
 
   confirmDelete() {
-    const token = localStorage.getItem('auth_token');
+    const token = this.authService.getToken();
     this.http.delete(`http://localhost:3000/assets/${this.assetToDeleteId}`, {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe(() => {

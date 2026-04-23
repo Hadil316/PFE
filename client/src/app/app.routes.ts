@@ -6,21 +6,25 @@ import { UserManagementComponent } from './components/user-management.component'
 import { HierarchyComponent } from './components/hierarchy.component';
 import { AlertsComponent } from './components/alerts.component'; 
 import { ReportsComponent } from './components/reports.component';
-import { BillingComponent } from './components/billing.component'; // <--- IMPORT
+import { BillingComponent } from './components/billing.component';
+import { ProfileComponent } from './components/profile.component'; // <--- IMPORTÉ ICI
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   {
-    path: '', component: DashboardLayoutComponent, canActivate: [AuthGuard],
+    path: '',
+    component: DashboardLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'hierarchy', component: HierarchyComponent },
       { path: 'users', component: UserManagementComponent },
       { path: 'alerts', component: AlertsComponent },
       { path: 'reports', component: ReportsComponent },
-      { path: 'billing', component: BillingComponent }, // <--- ROUTE
+      { path: 'billing', component: BillingComponent },
+      { path: 'profile', component: ProfileComponent }, // <--- ROUTE ACTIVÉE
     ]
   },
   { path: '**', redirectTo: 'login' }

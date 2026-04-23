@@ -16,7 +16,7 @@ export class SidebarComponent implements OnInit {
   
   activeButton = signal('overview');
   
-  // --- SIGNAL POUR LA MODAL DE DÉCONNEXION ---
+  // --- LE SIGNAL QUI MANQUAIT POUR LE BOUTON ---
   showLogoutModal = signal(false);
 
   ngOnInit() {
@@ -29,6 +29,7 @@ export class SidebarComponent implements OnInit {
       else if (url.includes('alerts')) this.activeButton.set('alerts');
       else if (url.includes('reports')) this.activeButton.set('reports');
       else if (url.includes('billing')) this.activeButton.set('billing');
+      else if (url.includes('profile')) this.activeButton.set('profile');
       else this.activeButton.set('overview');
     });
   }
@@ -37,24 +38,19 @@ export class SidebarComponent implements OnInit {
     this.router.navigate([`/${route}`]);
   }
 
-  // --- MÉTHODES DE DÉCONNEXION APPELÉES PAR LE HTML ---
-  
+  // --- FONCTIONS DE DÉCONNEXION ---
+
   askLogout() {
-    this.showLogoutModal.set(true);
+    this.showLogoutModal.set(true); // Ouvre la fenêtre
   }
 
   cancelLogout() {
-    this.showLogoutModal.set(false);
+    this.showLogoutModal.set(false); // Ferme la fenêtre
   }
 
   confirmLogout() {
     this.showLogoutModal.set(false);
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  logout() {
-    // Gardé par sécurité si appelé ailleurs
-    this.askLogout();
+    this.authService.logout(); // Vide la session
+    this.router.navigate(['/login']); // Redirige vers la connexion
   }
 }

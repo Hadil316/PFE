@@ -8,31 +8,86 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="w-full h-full p-10 bg-[#f8fafc] overflow-y-auto">
-      <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tighter">Historique des Alertes</h1>
-      <p class="text-slate-500 mb-8 font-medium">Dépassements de seuils d'intensité détectés en temps réel.</p>
+    <div class="w-full h-full p-10 bg-[#f8fafc] overflow-y-auto custom-scrollbar">
+      
+      <!-- HEADER STYLE DÉGRADÉ -->
+      <div class="mb-10 flex justify-between items-end">
+        <div>
+          <h1 class="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight mb-2 uppercase">
+            Journal des Alertes
+          </h1>
+          <p class="text-slate-500 font-medium italic">Historique des dépassements de seuils d'intensité détectés en temps réel.</p>
+        </div>
+        
+        <!-- Badge Statut avec Lumière -->
+        <div class="bg-white rounded-2xl px-6 py-3 border-2 border-red-100 shadow-[0_0_15px_rgba(239,68,68,0.1)] flex items-center gap-3">
+          <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+          <span class="text-xs font-black text-slate-700 uppercase tracking-widest">Surveillance Active</span>
+        </div>
+      </div>
 
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-left">
-          <thead class="bg-slate-50 border-b border-slate-100">
-            <tr>
-              <th class="p-6 text-xs text-slate-400 uppercase tracking-widest">Date & Heure</th>
-              <th class="p-6 text-xs text-slate-400 uppercase tracking-widest">Équipement</th>
-              <th class="p-6 text-xs text-slate-400 uppercase tracking-widest">Message</th>
-              <th class="p-6 text-xs text-slate-400 uppercase tracking-widest">Valeur Mesurée</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let a of alerts()" class="border-b border-slate-50 hover:bg-red-50/20 transition-all">
-              <td class="p-6 text-sm font-bold text-slate-600">{{ a.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-              <td class="p-6 font-black text-slate-900">{{ a.assetName }}</td>
-              <td class="p-6 text-red-600 font-bold bg-red-50/50">{{ a.message }}</td>
-              <td class="p-6 font-black text-red-600">{{ a.value }}A <span class="text-[10px] text-slate-400">(Seuil: {{a.threshold}}A)</span></td>
-            </tr>
-          </tbody>
-        </table>
-        <div *ngIf="alerts().length === 0" class="p-20 text-center text-slate-300 font-bold italic">
-          Aucune alerte enregistrée pour le moment. ✨
+      <!-- GRAND CONTENEUR (Grand Case avec Lumière Rouge/Rose) -->
+      <div class="bg-white/70 backdrop-blur-sm rounded-[2.5rem] shadow-[0_0_50px_rgba(239,68,68,0.12)] border border-white p-10">
+        
+        <div class="space-y-6">
+          
+          <!-- Légende des colonnes -->
+          <div class="grid grid-cols-12 px-10 mb-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <div class="col-span-3">Date & Heure</div>
+            <div class="col-span-3 text-center">Équipement</div>
+            <div class="col-span-3 text-center">Message</div>
+            <div class="col-span-3 text-right">Valeur Mesurée</div>
+          </div>
+
+          <!-- CARTES ALERTES (Lumière Permanente au survol) -->
+          <div *ngFor="let a of alerts()" 
+               class="bg-white rounded-3xl p-5 border-2 border-slate-50 shadow-sm grid grid-cols-12 items-center transition-all hover:scale-[1.01] hover:border-red-100 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+            
+            <!-- Date & Heure -->
+            <div class="col-span-3 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shadow-inner border border-slate-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <span class="text-sm font-bold text-slate-600">{{ a.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+            </div>
+
+            <!-- Équipement -->
+            <div class="col-span-3 text-center">
+              <p class="font-black text-slate-900 uppercase tracking-tight text-lg">{{ a.assetName }}</p>
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hardware Node</p>
+            </div>
+
+            <!-- Message Badge -->
+            <div class="col-span-3 flex justify-center">
+              <span class="px-5 py-2 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 shadow-sm">
+                {{ a.message }}
+              </span>
+            </div>
+
+            <!-- Valeur Mesurée -->
+            <div class="col-span-3 flex justify-end items-center gap-3">
+              <div class="text-right">
+                <p class="text-xl font-black text-red-600 leading-none">{{ a.value }}A</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Seuil: {{ a.threshold }}A</p>
+              </div>
+              <!-- Icône d'alerte lumineuse -->
+              <div class="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shadow-[0_0_10px_rgba(239,68,68,0.2)] border border-red-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Message si vide -->
+          <div *ngIf="alerts().length === 0" class="p-20 text-center text-slate-300 font-bold italic">
+            <div class="text-5xl mb-4 opacity-10">🛡️</div>
+            Aucune anomalie détectée dans l'historique.
+          </div>
+
         </div>
       </div>
     </div>

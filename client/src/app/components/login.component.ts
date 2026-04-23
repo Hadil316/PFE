@@ -8,73 +8,53 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: './login.component.html'
 })
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  isLogin = signal(true);
   email = signal('');
   password = signal('');
+  registerName = signal('');
+  
+  // Variables manquantes ajoutées pour le HTML
   isLoading = signal(false);
   errorMessage = signal('');
-  isRegisterMode = signal(false);
-  registerName = signal('');
+
+  toggleMode() { 
+    this.isLogin.set(!this.isLogin()); 
+    this.errorMessage.set('');
+  }
 
   login() {
-    if (!this.email() || !this.password()) {
-      this.errorMessage.set('Veuillez remplir tous les champs');
-      return;
-    }
-
     this.isLoading.set(true);
     this.errorMessage.set('');
-
     this.authService.login(this.email(), this.password()).subscribe({
       next: () => {
         this.isLoading.set(false);
-        // 🔹 Utilisation de replaceUrl pour empêcher le retour arrière vers login
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
+        this.router.navigate(['/dashboard']);
       },
-      error: (error) => {
+      error: (err: any) => {
         this.isLoading.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'Identifiants invalides'
-        );
+        this.errorMessage.set(err.error?.message || 'Identifiants invalides');
       }
     });
   }
 
-  register() {
-    if (!this.email() || !this.password() || !this.registerName()) {
-      this.errorMessage.set('Veuillez remplir tous les champs');
-      return;
-    }
-
+  handleRegister() {
     this.isLoading.set(true);
-    this.errorMessage.set('');
-
     this.authService.register(this.email(), this.registerName(), this.password()).subscribe({
       next: () => {
         this.isLoading.set(false);
-        // 🔹 Même chose pour l'inscription
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
+        alert('Compte créé !');
+        this.isLogin.set(true);
       },
-      error: (error) => {
+      error: (err: any) => {
         this.isLoading.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'Erreur lors de l\'inscription'
-        );
+        this.errorMessage.set(err.error?.message || 'Erreur inscription');
       }
     });
-  }
-
-  toggleMode() {
-    this.isRegisterMode.update(val => !val);
-    this.errorMessage.set('');
-    this.email.set('');
-    this.password.set('');
-    this.registerName.set('');
   }
 }

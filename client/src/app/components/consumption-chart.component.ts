@@ -8,44 +8,62 @@ import Chart from 'chart.js/auto';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="space-y-8">
-      <!-- 1. GRAPHIQUE TEMPS RÉEL -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter">⚡ Suivi en Direct (P, V, I)</h2>
-          <span class="flex items-center gap-2 text-[10px] font-bold text-emerald-500 animate-pulse">● LIVE MONITORING</span>
+    <div class="space-y-10">
+      
+      <!-- 1. GRAPHIQUE SUIVI EN DIRECT -->
+      <div *ngIf="mode === 'live'" class="bg-white p-6 rounded-[2.5rem] border-2 border-cyan-100 shadow-[0_0_20px_rgba(6,182,212,0.12)] h-full transition-all">
+        <div class="flex justify-between items-center mb-4 px-2">
+          <h2 class="text-[15px] font-bold text-[#1e293b] flex items-center gap-2 tracking-tight">
+            <svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            SUIVI EN DIRECT (P, V, I)
+          </h2>
+          <span class="text-[9px] font-black text-emerald-500 animate-pulse tracking-tighter">● LIVE MONITORING</span>
         </div>
-        <div class="h-[280px] w-full"><canvas #realtimeCanvas></canvas></div>
+        <div class="h-[250px] w-full"><canvas #realtimeCanvas></canvas></div>
       </div>
 
-      <!-- 2. GRAPHIQUE HISTORIQUE -->
-      <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-        <div class="flex justify-between items-center mb-8">
-          <h2 class="text-xl font-black text-slate-900 uppercase tracking-tighter">📊 Analyse Historique</h2>
-          <div class="flex bg-slate-100 p-1 rounded-xl border">
-            <button (click)="setPeriod('day')" [class.bg-white]="period() === 'day'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all">JOUR</button>
-            <button (click)="setPeriod('week')" [class.bg-white]="period() === 'week'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm mx-1 transition-all">SEMAINE</button>
-            <button (click)="setPeriod('month')" [class.bg-white]="period() === 'month'" class="px-4 py-1.5 rounded-lg text-[10px] font-black shadow-sm transition-all">MOIS</button>
+      <!-- 2. GRAPHIQUE ANALYSE HISTORIQUE -->
+      <div *ngIf="mode === 'history'" class="bg-white p-8 rounded-[2.5rem] border-2 border-purple-100 shadow-[0_0_20px_rgba(168,85,247,0.12)] transition-all">
+        <div class="flex justify-between items-center mb-8 px-2">
+          <h2 class="text-[15px] font-bold text-[#1e293b] flex items-center gap-2 tracking-tight">
+            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4"/>
+            </svg>
+            ANALYSE HISTORIQUE
+          </h2>
+          
+          <div class="flex bg-[#f1f3f9] p-1 rounded-full border border-slate-100 shadow-inner">
+            <button (click)="setPeriod('day')" [class.bg-white]="period() === 'day'" [class.text-purple-600]="period() === 'day'"
+                    class="px-5 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400">JOUR</button>
+            <button (click)="setPeriod('week')" [class.bg-white]="period() === 'week'" [class.text-purple-600]="period() === 'week'"
+                    class="px-5 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400 mx-1">SEMAINE</button>
+            <button (click)="setPeriod('month')" [class.bg-white]="period() === 'month'" [class.text-purple-600]="period() === 'month'"
+                    class="px-5 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400">MOIS</button>
           </div>
         </div>
+
         <div class="h-[350px] w-full relative">
            <canvas #historyCanvas></canvas>
-           <div *ngIf="noData()" class="absolute inset-0 flex items-center justify-center bg-white/90">
-             <p class="text-slate-400 font-bold text-sm italic">Collecte des données en cours...</p>
+           <div *ngIf="noData()" class="absolute inset-0 flex items-center justify-center bg-white/80">
+             <p class="text-slate-400 font-medium text-sm italic">Collecte des données en cours...</p>
            </div>
         </div>
-        <div class="flex justify-center gap-8 mt-6">
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Puissance (kW)</span></div>
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-orange-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Tension (V)</span></div>
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-[9px] font-black text-slate-500 uppercase">Intensité (A)</span></div>
+
+        <div class="flex justify-center gap-10 mt-8">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span><span class="text-[10px] font-bold text-slate-500 uppercase">Puissance (kW)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span><span class="text-[10px] font-bold text-slate-500 uppercase">Tension (V)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-[#10b981]"></span><span class="text-[10px] font-bold text-slate-500 uppercase">Intensité (A)</span></div>
         </div>
       </div>
     </div>
   `
 })
 export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
-  @Input() assetId!: number;
-  @Input() realtimeData!: any; 
+  @Input() assetId: any;
+  @Input() realtimeData: any; 
+  @Input() mode: string = 'live'; 
 
   @ViewChild('realtimeCanvas') realtimeCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('historyCanvas') historyCanvas!: ElementRef<HTMLCanvasElement>;
@@ -59,7 +77,9 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   private refreshInterval: any;
 
   ngOnInit() {
-    this.refreshInterval = setInterval(() => { if (this.assetId) this.fetchHistory(); }, 30000);
+    if (this.mode === 'history') {
+      this.refreshInterval = setInterval(() => { if (this.assetId) this.fetchHistory(); }, 30000);
+    }
   }
 
   ngOnDestroy() { 
@@ -69,8 +89,8 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['assetId'] && this.assetId) this.fetchHistory();
-    if (changes['realtimeData'] && this.realtimeData) this.updateRealtimeChart();
+    if (changes['assetId'] && this.assetId && this.mode === 'history') this.fetchHistory();
+    if (changes['realtimeData'] && this.realtimeData && this.mode === 'live') this.updateRealtimeChart();
   }
 
   setPeriod(p: string) {
@@ -81,15 +101,11 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   private updateRealtimeChart() {
     if (!this.realtimeCanvas || !this.realtimeData) return;
     if (!this.rtChart) this.initRealtimeChart();
-
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     this.rtChart.data.labels.push(time);
-    
-    // CORRECTION : On met à jour les 3 datasets
     this.rtChart.data.datasets[0].data.push(parseFloat(this.realtimeData.TKW || 0));
     this.rtChart.data.datasets[1].data.push(parseFloat(this.realtimeData.V1N || 0));
     this.rtChart.data.datasets[2].data.push(parseFloat(this.realtimeData.I1 || 0));
-    
     if (this.rtChart.data.labels.length > 20) {
       this.rtChart.data.labels.shift();
       this.rtChart.data.datasets.forEach((d: any) => d.data.shift());
@@ -101,19 +117,11 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
     this.rtChart = new Chart(this.realtimeCanvas.nativeElement, {
       type: 'line',
       data: { labels: [], datasets: [
-        { label: 'Puissance', data: [], borderColor: '#3b82f6', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'y' },
-        { label: 'Tension', data: [], borderColor: '#f59e0b', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'yV' },
-        { label: 'Intensité', data: [], borderColor: '#10b981', borderWidth: 3, tension: 0.4, pointRadius: 0, yAxisID: 'y' }
+        { label: 'Puissance', data: [], borderColor: '#3b82f6', borderWidth: 1.5, tension: 0.4, pointRadius: 0, yAxisID: 'y' },
+        { label: 'Tension', data: [], borderColor: '#f59e0b', borderWidth: 1.5, tension: 0.4, pointRadius: 0, yAxisID: 'yV', fill: true, backgroundColor: 'rgba(245, 158, 11, 0.02)' },
+        { label: 'Intensité', data: [], borderColor: '#10b981', borderWidth: 1.5, tension: 0.4, pointRadius: 0, yAxisID: 'y' }
       ]},
-      options: { 
-        responsive: true, maintainAspectRatio: false, animation: false,
-        plugins: { legend: { display: false } }, 
-        scales: { 
-          x: { display: true, ticks: { font: { size: 9 }, autoSkip: true, maxTicksLimit: 8 } },
-          y: { position: 'left', beginAtZero: true, title: { display: true, text: 'kW / A', font: { size: 10 } } },
-          yV: { position: 'right', min: 0, max: 500, title: { display: true, text: 'Volts', font: { size: 10 } }, grid: { display: false } }
-        } 
-      }
+      options: this.getChartOptions()
     });
   }
 
@@ -127,7 +135,6 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
             this.initHistoryChart(res); 
         } else {
             this.noData.set(true);
-            if (this.histChart) this.histChart.destroy();
         }
     });
   }
@@ -136,7 +143,7 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
     if (!this.historyCanvas) return;
     const labels = data.map(d => {
       const date = new Date(d.time);
-      return this.period() === 'day' ? `${date.getHours()}h:${date.getMinutes()}` : `${date.getDate()}/${date.getMonth() + 1}`;
+      return this.period() === 'day' ? `${date.getHours()}h` : `${date.getDate()}/${date.getMonth() + 1}`;
     });
 
     if (this.histChart) this.histChart.destroy();
@@ -145,20 +152,67 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
       data: {
         labels: labels,
         datasets: [
-          { label: 'Puissance', data: data.map(d => d.avgpower), borderColor: '#3b82f6', borderWidth: 3, tension: 0.4, yAxisID: 'y', pointRadius: 0 },
-          { label: 'Tension', data: data.map(d => d.avgvoltage), borderColor: '#f59e0b', borderWidth: 3, tension: 0.4, yAxisID: 'yV', pointRadius: 0 },
-          { label: 'Intensité', data: data.map(d => d.avgcurrent), borderColor: '#10b981', borderWidth: 3, tension: 0.4, yAxisID: 'y', pointRadius: 0 }
+          { label: 'Puissance', data: data.map(d => d.avgpower), borderColor: '#3b82f6', borderWidth: 2, tension: 0.4, yAxisID: 'y', pointRadius: 0 },
+          { label: 'Tension', data: data.map(d => d.avgvoltage), borderColor: '#f59e0b', borderWidth: 2, tension: 0.4, yAxisID: 'yV', fill: true, backgroundColor: 'rgba(245, 158, 11, 0.04)', pointRadius: 0 },
+          { label: 'Intensité', data: data.map(d => d.avgcurrent), borderColor: '#10b981', borderWidth: 2, tension: 0.4, yAxisID: 'y', pointRadius: 0 }
         ]
       },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { type: 'linear', position: 'left', grid: { color: '#f1f5f9' }, title: { display: true, text: 'kW / A' } },
-          yV: { type: 'linear', position: 'right', min: 0, max: 500, grid: { display: false }, title: { display: true, text: 'Volts' } },
-          x: { ticks: { maxTicksLimit: 10 } }
-        }
-      }
+      options: this.getChartOptions()
     });
+  }
+
+  // --- CONFIGURATION DU TOOLTIP (MISE À JOUR STYLE CAPTURE 2) ---
+  private getChartOptions(): any {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {
+        mode: 'index' as const,
+        intersect: false,
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#ffffff',
+          titleColor: '#1e293b',
+          titleFont: { size: 14, weight: 'bold' as const },
+          bodyFont: { size: 13, weight: '500' },
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          padding: 15,
+          cornerRadius: 12,
+          displayColors: false, // On cache les carrés pour utiliser le texte coloré
+          callbacks: {
+            label: (context: any) => {
+              const label = context.dataset.label || '';
+              const value = context.parsed.y !== null ? context.parsed.y.toFixed(2) : '0.00';
+              
+              // Ajout des unités dynamiquement selon le label
+              let unit = '';
+              if (label.includes('Intensité')) unit = '(A)';
+              if (label.includes('Puissance')) unit = '(kW)';
+              if (label.includes('Tension')) unit = '(V)';
+              
+              return `${label} ${unit} : ${value}`;
+            },
+            // Logique de couleur du texte par ligne
+            labelTextColor: (context: any) => {
+              const label = context.dataset.label || '';
+              if (label.includes('Intensité')) return '#10b981'; // Vert
+              if (label.includes('Puissance')) return '#3b82f6'; // Bleu
+              if (label.includes('Tension')) return '#f59e0b';   // Orange
+              return '#1e293b';
+            }
+          }
+        }
+      },
+      scales: {
+        y: { type: 'linear' as const, position: 'left' as const, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+        yV: { type: 'linear' as const, position: 'right' as const, min: 0, max: 500, grid: { display: false }, ticks: { font: { size: 10 }, color: '#f59e0b' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 12 } }
+      }
+    };
   }
 }

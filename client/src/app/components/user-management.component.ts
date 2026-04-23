@@ -1,122 +1,90 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule],
-  templateUrl: './user-management.component.html',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './user-management.component.html'
 })
 export class UserManagementComponent implements OnInit {
   private http = inject(HttpClient);
+  public authService = inject(AuthService);
 
   users = signal<any[]>([]);
-  showModal = false;
-  showDeleteModal = false;
-  isEditMode = false;
-  passwordVisible = false;
-  userToDeleteId: number | null = null;
-  visiblePasswords: { [key: number]: boolean } = {};
-  userForm = { id: null, username: '', email: '', password: '', role: 'UTILISATEUR' };
+  
+  // --- Signaux pour les Fenêtres (Modals) ---
+  showUserModal = signal(false);
+  showDeleteModal = signal(false);
+  isEditMode = signal(false);
+  
+  // Formulaire
+  userForm = signal({ 
+    id: null as number | null, 
+    username: '', 
+    email: '', 
+    password: '', 
+    role: 'UTILISATEUR' 
+  });
+  
+  userToDelete = signal<any>(null);
 
   ngOnInit() {
-    this.fetchUsers();
+    this.loadUsers();
   }
 
-  fetchUsers() {
-    this.http.get<any[]>('http://localhost:3000/users').subscribe({
-      next: (res) => this.users.set(res),
-      error: (err) => console.error('Erreur lors de la récupération des utilisateurs', err),
-    });
+  loadUsers() {
+    const token = this.authService.getToken();
+    this.http.get<any[]>('http://localhost:3000/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe(res => this.users.set(res));
   }
 
-  togglePassword(id: number) {
-    this.visiblePasswords[id] = !this.visiblePasswords[id];
+  // --- ACTIONS DES BOUTONS ---
+
+  openAdd() {
+    this.isEditMode.set(false);
+    this.userForm.set({ id: null, username: '', email: '', password: '', role: 'UTILISATEUR' });
+    this.showUserModal.set(true); // Ouvre la fenêtre
   }
 
-  openAddModal() {
-    this.isEditMode = false;
-    this.userForm = { id: null, username: '', email: '', password: '', role: 'UTILISATEUR' };
-    this.showModal = true;
+  openEdit(user: any) {
+    this.isEditMode.set(true);
+    this.userForm.set({ ...user, password: '' });
+    this.showUserModal.set(true); // Ouvre la fenêtre
   }
 
-  openEditModal(user: any) {
-    this.isEditMode = true;
-    this.userForm = { ...user };
-    this.showModal = true;
+  askDelete(user: any) {
+    this.userToDelete.set(user);
+    this.showDeleteModal.set(true); // Ouvre la fenêtre
   }
 
   saveUser() {
-    if (this.isEditMode) {
-      this.http.patch(`http://localhost:3000/users/${this.userForm.id}`, this.userForm)
-        .subscribe(() => { this.fetchUsers(); this.showModal = false; });
-    } else {
-      const { id, ...data } = this.userForm;
-      this.http.post('http://localhost:3000/users', data)
-        .subscribe(() => { this.fetchUsers(); this.showModal = false; });
-    }
-  }
+    const data = this.userForm();
+    const token = this.authService.getToken();
+    const headers = { Authorization: `Bearer ${token}` };
 
-  askDelete(id: number) {
-    this.userToDeleteId = id;
-    this.showDeleteModal = true;
+    if (this.isEditMode()) {
+      this.http.patch(`http://localhost:3000/users/${data.id}`, data, { headers })
+        .subscribe(() => { this.loadUsers(); this.showUserModal.set(false); });
+    } else {
+      this.http.post('http://localhost:3000/users', data, { headers })
+        .subscribe(() => { this.loadUsers(); this.showUserModal.set(false); });
+    }
   }
 
   confirmDelete() {
-    if (this.userToDeleteId) {
-      this.http.delete(`http://localhost:3000/users/${this.userToDeleteId}`)
-        .subscribe(() => { this.fetchUsers(); this.showDeleteModal = false; });
-    }
-  }
-
-  // CORRECTION : Fonction pour afficher le libellé du rôle correctement
-  getRoleLabel(role: string): string {
-    // Convertir en minuscule pour la comparaison (insensible à la casse)
-    const roleLower = (role || '').toLowerCase();
-    
-    switch(roleLower) {
-      case 'admin':
-        return 'Admin';
-      case 'responsable_energie':
-        return 'Resp. Énergie';
-      case 'utilisateur':
-        return 'Agent';
-      default:
-        return role || 'Agent';
-    }
-  }
-
-  // CORRECTION : Fonction pour obtenir la classe CSS du rôle
-  getRoleClass(role: string): string {
-    const roleLower = (role || '').toLowerCase();
-    
-    switch(roleLower) {
-      case 'admin':
-        return 'bg-purple-600';
-      case 'responsable_energie':
-        return 'bg-teal-600';
-      case 'utilisateur':
-        return 'bg-blue-600';
-      default:
-        return 'bg-slate-600';
-    }
-  }
-
-  // CORRECTION : Fonction pour obtenir la classe du badge
-  getBadgeClass(role: string): string {
-    const roleLower = (role || '').toLowerCase();
-    
-    switch(roleLower) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-700';
-      case 'responsable_energie':
-        return 'bg-teal-100 text-teal-700';
-      case 'utilisateur':
-        return 'bg-blue-100 text-blue-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
-    }
+    const user = this.userToDelete();
+    if (!user) return;
+    const token = this.authService.getToken();
+    this.http.delete(`http://localhost:3000/users/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe(() => {
+      this.loadUsers();
+      this.showDeleteModal.set(false);
+    });
   }
 }
