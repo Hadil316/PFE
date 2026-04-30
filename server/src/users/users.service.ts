@@ -23,7 +23,7 @@ export class UsersService {
       username: userData.username,
       email: userData.email,
       password: userData.password, 
-      role: userData.role || 'UTILISATEUR'
+      role: userData.role || 'AGENT'
     }).returning();
   }
 

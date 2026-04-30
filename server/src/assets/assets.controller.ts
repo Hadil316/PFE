@@ -10,7 +10,12 @@ export class AssetsController {
 
   @Get('tree')
   findAll() {
-    return this.assetsService.findAll();
+    try {
+      return this.assetsService.findAll();
+    } catch (e: any) {
+      console.error("Erreur dans le controller:", e.message || e);
+      return { error: e.message || 'Erreur inconnue', data: [] };
+    }
   }
 
   @Get(':id')

@@ -15,11 +15,13 @@ export class ProfileComponent implements OnInit {
   
   userProfile = signal<any>({ username: 'Chargement...', email: '', role: '' });
   passwords = signal({ current: '', new: '', confirm: '' });
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   // --- Signaux pour la Modal de Succès ---
   showSuccessModal = signal(false);
   successMessage = signal('');
-  modalTheme = signal<'green' | 'purple'>('green'); // <--- Gère la couleur dynamique
+  modalTheme = signal<'green' | 'purple'>('green');
 
   ngOnInit() {
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
@@ -34,21 +36,67 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile() {
-    // Logique métier : Sauvegarde
-    this.modalTheme.set('green'); // <--- Thème Vert
-    this.successMessage.set('Vos informations ont été mises à jour avec succès !');
-    this.showSuccessModal.set(true);
+    const user = this.authService.currentUserValue;
+    if (!user || !user.id) {
+      this.errorMessage.set('Utilisateur non connecté');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.authService.updateProfile(user.id, {
+      username: this.userProfile().username,
+      email: this.userProfile().email
+    }).pipe(take(1)).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.modalTheme.set('green');
+        this.successMessage.set('Vos informations ont été mises à jour avec succès !');
+        this.showSuccessModal.set(true);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Erreur lors de la mise à jour');
+        console.error('Update profile error:', err);
+      }
+    });
   }
 
   updatePassword() {
-    if (this.passwords().new !== this.passwords().confirm) {
+    const user = this.authService.currentUserValue;
+    if (!user || !user.id) {
+      this.errorMessage.set('Utilisateur non connecté');
       return;
     }
-    // Logique métier : Modification mot de passe
-    this.modalTheme.set('purple'); // <--- Thème Violet
-    this.successMessage.set('Mot de passe modifié avec succès !');
-    this.showSuccessModal.set(true);
-    this.passwords.set({ current: '', new: '', confirm: '' });
+
+    if (this.passwords().new !== this.passwords().confirm) {
+      this.errorMessage.set('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (this.passwords().new.length < 4) {
+      this.errorMessage.set('Le mot de passe doit contenir au moins 4 caractères');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+
+    this.authService.updatePassword(user.id, this.passwords().new).pipe(take(1)).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.modalTheme.set('purple');
+        this.successMessage.set('Mot de passe modifié avec succès !');
+        this.showSuccessModal.set(true);
+        this.passwords.set({ current: '', new: '', confirm: '' });
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Erreur lors de la modification du mot de passe');
+        console.error('Update password error:', err);
+      }
+    });
   }
 
   closeSuccess() {

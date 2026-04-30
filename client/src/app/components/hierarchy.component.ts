@@ -19,6 +19,8 @@ export class HierarchyComponent implements OnInit {
   public assetState = inject(AssetStateService);
 
   hierarchy = signal<any[]>([]);
+  isLoading = signal(true);
+  errorMessage = signal('');
   showAssetModal = signal(false);
   isEditAssetMode = signal(false);
   showDeleteAssetModal = signal(false);
@@ -41,12 +43,27 @@ export class HierarchyComponent implements OnInit {
 
   loadHierarchy() {
     const token = this.authService.getToken();
-    if (!token) return;
+    if (!token) {
+      this.errorMessage.set('Non connecté - Veuillez vous reconnecter');
+      this.isLoading.set(false);
+      return;
+    }
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    console.log('Token:', token);
     this.http.get<any[]>('http://localhost:3000/assets/tree', {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe({
-      next: res => this.hierarchy.set(res),
-      error: err => console.error('Erreur hiérarchie:', err)
+      next: res => {
+        console.log('Hierarchy response:', res);
+        this.hierarchy.set(res);
+        this.isLoading.set(false);
+      },
+      error: err => {
+        console.error('Erreur hiérarchie:', err);
+        this.errorMessage.set('Erreur: ' + (err.status + ' - ' + (err.error?.message || err.message || 'Erreur inconnue')));
+        this.isLoading.set(false);
+      }
     });
   }
 

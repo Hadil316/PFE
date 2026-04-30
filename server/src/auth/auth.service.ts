@@ -51,7 +51,7 @@ export class AuthService {
       email,
       username,
       password,
-      role: 'UTILISATEUR'
+      role: 'AGENT'
     });
 
     const payload = {

@@ -8,6 +8,20 @@
     <p class="text-slate-400 font-medium italic text-xs">Gérez vos informations et votre sécurité.</p>
   </div>
 
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="max-w-5xl mx-auto mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-red-600 text-sm font-bold text-center">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="max-w-5xl mx-auto mb-6 p-4 bg-cyan-50 border-2 border-cyan-200 rounded-2xl text-cyan-600 text-sm font-bold text-center">
+      Traitement en cours...
+    </div>
+  }
+
   <div class="grid grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
     
     <!-- CARD GAUCHE : INFORMATIONS (Sauvegarde) -->
@@ -25,7 +39,7 @@
 
         <div class="w-full space-y-5 text-left">
           <input type="text" [(ngModel)]="userProfile().username" class="w-full px-5 py-3 bg-white rounded-2xl border-2 border-blue-50 shadow-[0_0_15px_rgba(59,130,246,0.08)] outline-none font-bold text-slate-700 text-sm">
-          <input type="email" [value]="userProfile().email" disabled class="w-full px-5 py-3 bg-slate-50/50 rounded-2xl border-2 border-transparent font-bold text-slate-400 cursor-not-allowed italic text-sm">
+          <input type="email" [(ngModel)]="userProfile().email" class="w-full px-5 py-3 bg-white rounded-2xl border-2 border-blue-50 shadow-[0_0_15px_rgba(59,130,246,0.08)] outline-none font-bold text-slate-700 text-sm">
         </div>
       </div>
       <button (click)="saveProfile()" class="w-full mt-10 py-3 bg-cyan-500/10 text-cyan-600 border-2 border-cyan-500/20 rounded-full font-black text-[11px] uppercase tracking-[0.15em] hover:bg-cyan-500 hover:text-white transition-all">

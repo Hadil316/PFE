@@ -7,7 +7,7 @@ import { HierarchyComponent } from './components/hierarchy.component';
 import { AlertsComponent } from './components/alerts.component'; 
 import { ReportsComponent } from './components/reports.component';
 import { BillingComponent } from './components/billing.component';
-import { ProfileComponent } from './components/profile.component'; // <--- IMPORTÉ ICI
+import { ProfileComponent } from './components/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -24,7 +24,7 @@ export const routes: Routes = [
       { path: 'alerts', component: AlertsComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'billing', component: BillingComponent },
-      { path: 'profile', component: ProfileComponent }, // <--- ROUTE ACTIVÉE
+      { path: 'profile', component: ProfileComponent },
     ]
   },
   { path: '**', redirectTo: 'login' }

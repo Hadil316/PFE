@@ -27,7 +27,7 @@ export class UserManagementComponent implements OnInit {
     username: '', 
     email: '', 
     password: '', 
-    role: 'UTILISATEUR' 
+    role: 'AGENT' 
   });
   
   userToDelete = signal<any>(null);
@@ -47,7 +47,7 @@ export class UserManagementComponent implements OnInit {
 
   openAdd() {
     this.isEditMode.set(false);
-    this.userForm.set({ id: null, username: '', email: '', password: '', role: 'UTILISATEUR' });
+    this.userForm.set({ id: null, username: '', email: '', password: '', role: 'AGENT' });
     this.showUserModal.set(true); // Ouvre la fenêtre
   }
 

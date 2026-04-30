@@ -25,9 +25,9 @@ import { AssetStateService } from '../services/asset-state.service';
                   class="px-8 py-3 bg-cyan-500/10 text-cyan-600 border-2 border-cyan-500/20 rounded-full font-black text-[12px] uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:bg-cyan-500 hover:text-white transition-all flex items-center gap-2">
             <span>🔄</span> Recalculer
           </button>
-          <button (click)="window.print()" 
+          <button (click)="downloadPDF()" 
                   class="px-8 py-3 bg-purple-500/10 text-purple-600 border-2 border-purple-500/20 rounded-full font-black text-[12px] uppercase shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-purple-600 hover:text-white transition-all flex items-center gap-2">
-            <span>🖨️</span> Imprimer
+            <span>📥</span> Télécharger PDF
           </button>
         </div>
       </div>
@@ -113,10 +113,71 @@ import { AssetStateService } from '../services/asset-state.service';
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
     @media print {
-      .no-print { display: none !important; }
-      .p-10 { padding: 0 !important; }
-      .bg-[#f8fafc] { background: white !important; }
-      .bg-white\/40, .bg-white\/70, .bg-white\/30 { background: white !important; border: 1px solid #eee !important; backdrop-filter: none !important; }
+      /* Hide everything by default */
+      * { visibility: hidden; }
+      
+      /* Show only the invoice frame and its contents */
+      :host, :host * { visibility: visible; }
+      
+      :host { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: white !important; 
+        z-index: 9999;
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Hide header and buttons */
+      .mb-10, .mb-12 { display: none !important; }
+      
+      /* Style the invoice frame */
+      .max-w-5xl { 
+        max-width: 100% !important; 
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      .bg-white\\/40, .bg-white\\/30 {
+        background: white !important; 
+        border: 2px solid #333 !important; 
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 20px !important;
+      }
+      
+      /* Ensure table is visible */
+      table, thead, tbody, tr, th, td { 
+        visibility: visible !important;
+      }
+      
+      thead tr {
+        background: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      tr { 
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      tr.bg-white\\/60 {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      body { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+      }
     }
   `]
 })
@@ -168,5 +229,115 @@ export class BillingComponent implements OnInit {
 
   calculateTotal() {
     return this.calculateEnergyHT() + this.bill().primePuissance + this.calculateTVA();
+  }
+
+  downloadPDF() {
+    const b = this.bill();
+    const name = this.assetName();
+    
+    // Generate HTML content for the invoice
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Facture - ${name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; background: white; }
+    .invoice-box { max-width: 800px; margin: 0 auto; padding: 40px; border: 2px solid #333; border-radius: 10px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0ea5e9; }
+    .header h1 { font-size: 32px; color: #0ea5e9; margin-bottom: 10px; }
+    .header p { color: #64748b; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+    th { background: #333; color: white; padding: 12px; text-align: left; font-weight: 700; }
+    th:nth-child(2), th:nth-child(3), th:nth-child(4) { text-align: center; }
+    td { padding: 10px; border: 1px solid #ddd; }
+    td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: center; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .total-row { background: #0ea5e9 !important; color: white; font-weight: 700; }
+    .total-row td { border: none; }
+    .footer { margin-top: 30px; text-align: center; color: #94a3b8; font-size: 11px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="invoice-box">
+    <div class="header">
+      <h1>⚡ FACTURE</h1>
+      <p>Équipement: ${name} | Date: ${new Date().toLocaleDateString('fr-FR')}</p>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Désignation / Libellé</th>
+          <th>Consommation</th>
+          <th>P.U (DT)</th>
+          <th>Montant (DT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Énergie Active (kWh)</strong></td>
+          <td>${b.activeEnergy?.toFixed(2) || '0.00'}</td>
+          <td>-</td>
+          <td>${this.calculateEnergyHT().toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Consommation Jour</td>
+          <td>${(b.activeEnergy * 0.4).toFixed(2)}</td>
+          <td>0.290</td>
+          <td>${(b.activeEnergy * 0.4 * 0.29).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Pointe (Matin & Soir)</td>
+          <td>${(b.activeEnergy * 0.2).toFixed(2)}</td>
+          <td>0.417</td>
+          <td>${(b.activeEnergy * 0.2 * 0.417).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Consommation Nuit</td>
+          <td>${(b.activeEnergy * 0.4).toFixed(2)}</td>
+          <td>0.222</td>
+          <td>${(b.activeEnergy * 0.4 * 0.222).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td><strong>Prime Puissance (DT)</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td>${b.primePuissance?.toFixed(3) || '0.000'}</td>
+        </tr>
+        <tr>
+          <td><strong>TVA (19%)</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td>${this.calculateTVA().toFixed(3)}</td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>TOTAL TTC</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td><strong>${this.calculateTotal().toFixed(3)} DT</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div class="footer">
+      <p>Document généré par le système EMS - Energy Management System</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Facture_${name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 }

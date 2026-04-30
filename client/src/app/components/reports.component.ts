@@ -28,58 +28,61 @@ import { AuthService } from '../services/auth.service';
       <!-- GRAND CONTENEUR LUMINEUX -->
       <div class="bg-white/70 backdrop-blur-sm rounded-[2.5rem] shadow-[0_0_60px_rgba(59,130,246,0.1)] border border-white p-12">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           
-          <!-- CARTES DE RAPPORTS -->
+          <!-- CARTES DE RAPPORTS - Include SITE now -->
           <div *ngFor="let asset of assets()" 
-               class="bg-white rounded-[2.5rem] p-8 border-2 transition-all hover:scale-[1.03] flex flex-col justify-between min-h-[350px]"
+               class="bg-white rounded-[2rem] p-6 border-2 transition-all hover:scale-[1.02] hover:shadow-xl flex flex-col justify-between min-h-[280px]"
+               [class.border-sky-100]="asset.type === 'SITE'" [class.shadow-[0_0_25px_rgba(14,165,233,0.15)]]="asset.type === 'SITE'"
                [class.border-purple-100]="asset.type === 'TGBT'" [class.shadow-[0_0_25px_rgba(168,85,247,0.1)]]="asset.type === 'TGBT'"
                [class.border-orange-100]="asset.type === 'ARMOIRE'" [class.shadow-[0_0_25px_rgba(245,158,11,0.1)]]="asset.type === 'ARMOIRE'"
                [class.border-emerald-100]="asset.type === 'LIGNE'" [class.shadow-[0_0_25px_rgba(16,185,129,0.1)]]="asset.type === 'LIGNE'"
                [class.border-pink-100]="asset.type === 'EQUIPEMENT'" [class.shadow-[0_0_25px_rgba(244,114,182,0.1)]]="asset.type === 'EQUIPEMENT'">
             
             <div>
-              <div class="flex justify-between items-start mb-8">
-                <!-- SYGLES STYLE CAPTURE 5 -->
-                <div class="w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-50 flex items-center justify-center">
-                   <svg *ngIf="asset.type === 'TGBT'" class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                   <svg *ngIf="asset.type === 'ARMOIRE'" class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                   <svg *ngIf="asset.type === 'LIGNE'" class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                   <svg *ngIf="asset.type === 'EQUIPEMENT'" class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+              <div class="flex justify-between items-start mb-4">
+                <!-- ICONS -->
+                <div class="w-10 h-10 rounded-xl bg-white shadow-md border border-slate-50 flex items-center justify-center">
+                   <svg *ngIf="asset.type === 'SITE'" class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                   <svg *ngIf="asset.type === 'TGBT'" class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                   <svg *ngIf="asset.type === 'ARMOIRE'" class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                   <svg *ngIf="asset.type === 'LIGNE'" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                   <svg *ngIf="asset.type === 'EQUIPEMENT'" class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
                 </div>
 
-                <span [class]="'px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] ' + 
-                      (asset.type === 'TGBT' ? 'bg-purple-50 text-purple-600' : 
+                <span [class]="'px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.12em] ' + 
+                      (asset.type === 'SITE' ? 'bg-sky-50 text-sky-600' : 
+                       asset.type === 'TGBT' ? 'bg-purple-50 text-purple-600' : 
                        asset.type === 'ARMOIRE' ? 'bg-orange-50 text-orange-500' : 
                        asset.type === 'LIGNE' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500')">
                   {{ asset.type }}
                 </span>
               </div>
 
-              <h3 class="text-2xl font-black text-slate-800 mb-6 tracking-tight uppercase">{{ asset.name }}</h3>
+              <h3 class="text-xl font-black text-slate-800 mb-4 tracking-tight uppercase">{{ asset.name }}</h3>
               
-              <ul class="space-y-3 mb-10">
-                <li class="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                   <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Analyse Tension / Courant
+              <ul class="space-y-2 mb-6">
+                <li class="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                   <span class="w-1 h-1 rounded-full bg-blue-500"></span> Analyse Tension / Courant
                 </li>
-                <li class="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                   <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Bilan Puissance (TKW)
+                <li class="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                   <span class="w-1 h-1 rounded-full bg-blue-500"></span> Bilan Puissance (TKW)
                 </li>
-                <li class="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                   <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Stabilité Réseau (Hz)
+                <li class="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                   <span class="w-1 h-1 rounded-full bg-blue-500"></span> Stabilité Réseau (Hz)
                 </li>
               </ul>
             </div>
             
-            <!-- BOUTON EXPORTER STYLE CAPTURE 2 (TRANSPARENT ET ARRONDI) -->
-            <button (click)="download(asset.id)" 
-                    [class]="'w-full py-4 rounded-full font-black text-[10px] uppercase tracking-widest transition-all border-2 shadow-sm flex items-center justify-center gap-2 ' + 
-                    (asset.type === 'TGBT' ? 'bg-purple-500/5 text-purple-600 border-purple-200 hover:bg-purple-600 hover:text-white' : 
-                     asset.type === 'ARMOIRE' ? 'bg-orange-500/5 text-orange-600 border-orange-200 hover:bg-orange-600 hover:text-white' : 
-                     asset.type === 'LIGNE' ? 'bg-emerald-500/5 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white' : 
-                     'bg-pink-500/5 text-pink-600 border-pink-200 hover:bg-pink-600 hover:text-white')">
-              📥 Exporter Rapport (.CSV)
-            </button>
+<!-- BOUTONS EXPORTER -->
+            <div class="flex gap-2">
+              <button (click)="downloadPDF(asset.id, asset.name)" class="flex-1 py-2.5 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all border-2 shadow-sm flex items-center justify-center gap-1 bg-sky-500/5 text-sky-600 border-sky-200 hover:bg-sky-600 hover:text-white">
+                📥 PDF
+              </button>
+              <button (click)="downloadCSV(asset.id, asset.name)" class="flex-1 py-2.5 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all border-2 shadow-sm flex items-center justify-center gap-1 bg-purple-500/5 text-purple-600 border-purple-200 hover:bg-purple-600 hover:text-white">
+                📄 CSV
+              </button>
+            </div>
           </div>
         </div>
 
@@ -109,12 +112,60 @@ export class ReportsComponent implements OnInit {
       };
       if (res) {
         flatten(res);
-        this.assets.set(list.filter(a => a.type !== 'SITE'));
+        // Include SITE now
+        this.assets.set(list);
       }
     });
   }
 
-  download(id: number) {
-    window.open(`http://localhost:3000/measurements/report/${id}`, '_blank');
+  downloadCSV(id: number, name: string) {
+    const token = this.auth.getToken();
+    if (!token) return;
+
+    this.http.get(`http://localhost:3000/measurements/report/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'text'
+    }).subscribe({
+      next: (csvData: string) => {
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Rapport_${name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error downloading CSV:', err);
+      }
+    });
+  }
+
+  downloadPDF(id: number, name: string) {
+    const token = this.auth.getToken();
+    if (!token) return;
+
+    // Fetch HTML content and download as PDF (HTML file that can be printed to PDF)
+    this.http.get(`http://localhost:3000/measurements/report/${id}?format=pdf`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'text'
+    }).subscribe({
+      next: (htmlContent: string) => {
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Rapport_${name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error downloading PDF:', err);
+      }
+    });
   }
 }

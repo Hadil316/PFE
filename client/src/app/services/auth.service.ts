@@ -48,4 +48,18 @@ export class AuthService {
     localStorage.removeItem('user');
     this.currentUserSubject.next(null);
   }
+
+  updateProfile(userId: number, data: { username: string; email: string }) {
+    return this.http.patch<any>(`http://localhost:3000/users/${userId}`, data).pipe(
+      tap(res => {
+        if (res && res[0]) {
+          this.updateLocalUserData(res[0]);
+        }
+      })
+    );
+  }
+
+  updatePassword(userId: number, password: string) {
+    return this.http.patch<any>(`http://localhost:3000/users/${userId}/password`, { password });
+  }
 }
