@@ -6,13 +6,26 @@ async function bootstrap() {
   
   // CORS Configuration
   app.enableCors({
-  origin: 'http://localhost:4200',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  credentials: true,
-});
+    origin: 'http://localhost:4200',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
-  await app.listen(3000);
-  console.log('🔐 EMS API running on http://localhost:3000');
+  const port = parseInt(process.env.PORT ?? '3000', 10) || 3000;
+  try {
+    await app.listen(port);
+    console.log(`🔐 EMS API running on http://localhost:${port}`);
+  } catch (error: any) {
+    if (error?.code === 'EADDRINUSE') {
+      const fallbackPort = port + 1;
+      console.warn(`Port ${port} is already in use, switching to ${fallbackPort}`);
+      await app.listen(fallbackPort);
+      console.log(`🔐 EMS API running on http://localhost:${fallbackPort}`);
+    } else {
+      throw error;
+    }
+  }
+
   console.log('📱 Client: http://localhost:4200');
 }
 bootstrap();
