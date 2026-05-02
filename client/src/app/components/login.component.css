@@ -5,14 +5,19 @@
   overflow: hidden;
 }
 
-/* Carte Glassmorphism */
+/* Carte Glassmorphism - Bleu ciel transparent */
 .glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(224, 242, 254, 0.12);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border-radius: 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 40px 0 rgba(56, 189, 248, 0.15), inset 0 1px 0 0 rgba(186, 230, 253, 0.3);
+  border: 1px solid rgba(186, 230, 253, 0.25);
+}
+
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
 }
 
 /* ===== PREMIUM FIELD FRAMES ===== */
@@ -26,7 +31,7 @@
   gap: 6px;
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #bae6fd;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
@@ -34,17 +39,19 @@
 
 .field-frame {
   position: relative;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: rgba(224, 242, 254, 0.15);
   border-radius: 20px;
   padding: 4px;
   transition: all 0.3s ease;
+  border: 1px solid rgba(186, 230, 253, 0.2);
 }
 
 .field-frame:focus-within {
-  background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%);
+  background: rgba(224, 242, 254, 0.25);
   box-shadow: 
-    0 0 0 3px rgba(14, 165, 233, 0.15),
-    0 4px 15px rgba(14, 165, 233, 0.1);
+    0 0 0 3px rgba(56, 189, 248, 0.2),
+    0 4px 15px rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
 }
 
 .field-icon {
@@ -52,7 +59,7 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: #7dd3fc;
   z-index: 10;
   transition: all 0.3s ease;
 }
@@ -69,7 +76,7 @@
   border-radius: 16px;
   font-size: 14px;
   font-weight: 500;
-  color: #1e293b;
+  color: #ffffff;
   transition: all 0.3s ease;
 }
 
@@ -78,7 +85,7 @@
 }
 
 .field-input::placeholder {
-  color: #94a3b8;
+  color: #7dd3fc;
 }
 
 /* ===== SUBMIT BUTTON ===== */
