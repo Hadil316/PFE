@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, signal, inject, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, signal, inject, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import Chart from 'chart.js/auto';
@@ -60,7 +60,7 @@ import Chart from 'chart.js/auto';
     </div>
   `
 })
-export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
+export class ConsumptionChartComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() assetId: any;
   @Input() realtimeData: any; 
   @Input() mode: string = 'live'; 
@@ -71,6 +71,7 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   private http = inject(HttpClient);
   period = signal<string>('day');
   noData = signal<boolean>(false);
+  private viewReady = false;
   
   private rtChart: any;
   private histChart: any;
@@ -82,6 +83,13 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
     }
   }
 
+  ngAfterViewInit() {
+    this.viewReady = true;
+    if (this.mode === 'history' && this.assetId) {
+      this.fetchHistory();
+    }
+  }
+
   ngOnDestroy() { 
     if (this.refreshInterval) clearInterval(this.refreshInterval);
     if (this.rtChart) this.rtChart.destroy();
@@ -89,7 +97,9 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['assetId'] && this.assetId && this.mode === 'history') this.fetchHistory();
+    if (changes['assetId'] && this.assetId && this.mode === 'history' && this.viewReady) {
+      this.fetchHistory();
+    }
     if (changes['realtimeData'] && this.realtimeData && this.mode === 'live') this.updateRealtimeChart();
   }
 
@@ -126,16 +136,27 @@ export class ConsumptionChartComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   fetchHistory() {
+    if (!this.assetId) {
+      this.noData.set(true);
+      return;
+    }
+
     const token = localStorage.getItem('auth_token');
+    this.noData.set(true);
     this.http.get<any[]>(`http://localhost:3000/measurements/history/${this.assetId}?period=${this.period()}`, {
       headers: { Authorization: `Bearer ${token}` }
-    }).subscribe((res: any[]) => { 
+    }).subscribe({
+      next: (res: any[]) => {
         if (res && res.length > 0) {
-            this.noData.set(false);
-            this.initHistoryChart(res); 
+          this.noData.set(false);
+          this.initHistoryChart(res);
         } else {
-            this.noData.set(true);
+          this.noData.set(true);
         }
+      },
+      error: () => {
+        this.noData.set(true);
+      }
     });
   }
 

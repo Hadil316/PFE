@@ -101,6 +101,14 @@ export class MeasurementsService {
     }).from(schema.alerts).leftJoin(schema.assets, eq(schema.alerts.assetId, schema.assets.id)).orderBy(desc(schema.alerts.timestamp));
   }
 
+  async findLatestAlert() {
+    const result = await this.db.select({
+      id: schema.alerts.id, assetName: schema.assets.name, message: schema.alerts.message,
+      value: schema.alerts.value, threshold: schema.alerts.threshold, timestamp: schema.alerts.timestamp,
+    }).from(schema.alerts).leftJoin(schema.assets, eq(schema.alerts.assetId, schema.assets.id)).orderBy(desc(schema.alerts.timestamp)).limit(1);
+    return result[0] || null;
+  }
+
   async calculateBilling(assetId: number) {
     const data = await this.findHistory(assetId, 'month');
     const totalPower = data.reduce((acc, curr) => acc + (curr.avgpower || 0), 0);

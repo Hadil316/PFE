@@ -22,6 +22,8 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
+    const permissions = await this.usersService.getUserPermissions(user.id);
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -35,7 +37,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role
+        role: user.role,
+        permissions: permissions.map(p => p.code)
       }
     };
   }
@@ -54,6 +57,8 @@ export class AuthService {
       role: 'AGENT'
     });
 
+    const permissions = await this.usersService.getUserPermissions(newUser[0].id);
+
     const payload = {
       sub: newUser[0].id,
       email: newUser[0].email,
@@ -67,7 +72,8 @@ export class AuthService {
         id: newUser[0].id,
         email: newUser[0].email,
         username: newUser[0].username,
-        role: newUser[0].role
+        role: newUser[0].role,
+        permissions: permissions.map(p => p.code)
       }
     };
   }

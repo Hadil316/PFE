@@ -14,46 +14,49 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  isLogin = signal(true);
-  email = signal('');
-  password = signal('');
-  registerName = signal('');
+  isLogin = true;
+  email = '';
+  password = '';
+  registerName = '';
   
   // Variables manquantes ajoutées pour le HTML
-  isLoading = signal(false);
-  errorMessage = signal('');
+  isLoading = false;
+  errorMessage = '';
 
-  toggleMode() { 
-    this.isLogin.set(!this.isLogin()); 
-    this.errorMessage.set('');
+  toggleMode() {
+    this.isLogin = !this.isLogin;
+    this.errorMessage = '';
   }
 
   login() {
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    this.authService.login(this.email(), this.password()).subscribe({
+    this.isLoading = true;
+    this.errorMessage = '';
+    const email = this.email.trim().toLowerCase();
+    const password = this.password.trim();
+
+    this.authService.login(email, password).subscribe({
       next: () => {
-        this.isLoading.set(false);
+        this.isLoading = false;
         this.router.navigate(['/dashboard']);
       },
       error: (err: any) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(err.error?.message || 'Identifiants invalides');
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || 'Identifiants invalides';
       }
     });
   }
 
   handleRegister() {
-    this.isLoading.set(true);
-    this.authService.register(this.email(), this.registerName(), this.password()).subscribe({
+    this.isLoading = true;
+    this.authService.register(this.email, this.registerName, this.password).subscribe({
       next: () => {
-        this.isLoading.set(false);
+        this.isLoading = false;
         alert('Compte créé !');
-        this.isLogin.set(true);
+        this.isLogin = true;
       },
       error: (err: any) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(err.error?.message || 'Erreur inscription');
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || 'Erreur inscription';
       }
     });
   }

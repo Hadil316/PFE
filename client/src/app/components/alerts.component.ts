@@ -10,6 +10,14 @@ import { AuthService } from '../services/auth.service';
   template: `
     <div class="w-full h-full p-10 bg-[#f8fafc] overflow-y-auto custom-scrollbar">
       
+      <!-- NOTIFICATION TOAST (Temporaire 2 sec) -->
+      <div *ngIf="showNotification()" 
+           class="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl shadow-2xl border border-red-400 max-w-2xl">
+          <p class="text-sm font-bold tracking-wide">{{ notificationMessage() }}</p>
+        </div>
+      </div>
+      
       <!-- HEADER STYLE DÉGRADÉ -->
       <div class="mb-10 flex justify-between items-end">
         <div>
@@ -97,10 +105,41 @@ export class AlertsComponent implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   alerts = signal<any[]>([]);
+  lastAlert = signal<any>(null);
+  showNotification = signal<boolean>(false);
+  notificationMessage = signal<string>('');
+  private notificationTimeout: any;
 
   ngOnInit() {
     this.http.get<any[]>('http://localhost:3000/measurements/alerts/all', {
       headers: { Authorization: `Bearer ${this.auth.getToken()}` }
-    }).subscribe(res => this.alerts.set(res));
+    }).subscribe(res => {
+      this.alerts.set(res);
+      this.updateLastAlert();
+    });
+  }
+
+  private updateLastAlert() {
+    if (this.alerts().length > 0) {
+      const newAlert = this.alerts()[0];
+      this.lastAlert.set(newAlert);
+      this.showAlertNotification(newAlert);
+    } else {
+      this.lastAlert.set(null);
+    }
+  }
+
+  private showAlertNotification(alert: any) {
+    const dateStr = new Date(alert.timestamp).toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const timeStr = new Date(alert.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const message = `🔴 DERNIÈRE ALERTE (${dateStr} ${timeStr}) : ${alert.message} sur ${alert.assetName} – ${alert.value}A (Seuil ${alert.threshold}A)`;
+    
+    this.notificationMessage.set(message);
+    this.showNotification.set(true);
+
+    if (this.notificationTimeout) clearTimeout(this.notificationTimeout);
+    this.notificationTimeout = setTimeout(() => {
+      this.showNotification.set(false);
+    }, 3000);
   }
 }

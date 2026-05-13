@@ -43,6 +43,14 @@ export class AuthService {
 
   getToken() { return localStorage.getItem('auth_token'); }
 
+  hasPermission(code: string): boolean {
+    if (this.isAdmin()) {
+      return true;
+    }
+    const permissions = this.currentUserValue?.permissions ?? [];
+    return permissions.includes(code);
+  }
+
   logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');

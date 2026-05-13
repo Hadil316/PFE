@@ -32,6 +32,10 @@ export class MeasurementsController {
   getAllAlerts() { return this.measurementsService.findAllAlerts(); }
 
   @UseGuards(JwtAuthGuard)
+  @Get('alerts/latest')
+  getLatestAlert() { return this.measurementsService.findLatestAlert(); }
+
+  @UseGuards(JwtAuthGuard)
   @Get('billing/:id')
   getBilling(@Param('id') id: string) { return this.measurementsService.calculateBilling(+id); }
 

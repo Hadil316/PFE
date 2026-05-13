@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, doublePrecision, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, doublePrecision, varchar, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -6,6 +6,20 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").default("AGENT"),
+});
+
+export const permissions = pgTable("permissions", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+});
+
+export const user_permissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  permissionId: integer("permission_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const assets = pgTable("assets", {
