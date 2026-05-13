@@ -1,11 +1,25 @@
-import { pgTable, serial, text, integer, timestamp, doublePrecision, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, doublePrecision, varchar, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").default("UTILISATEUR"),
+  role: text("role").default("AGENT"),
+});
+
+export const permissions = pgTable("permissions", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+});
+
+export const user_permissions = pgTable("user_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  permissionId: integer("permission_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const assets = pgTable("assets", {
@@ -35,6 +49,18 @@ export const alerts = pgTable("alerts", {
   value: doublePrecision("value").notNull(),
   threshold: doublePrecision("threshold").notNull(),
   timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Table des seuils d'alerte
+export const thresholds = pgTable("thresholds", {
+  id: serial("id").primaryKey(),
+  assetId: integer("asset_id").notNull(),
+  parameter: text("parameter").notNull(), // V1N, V2N, V3N, I1, I2, I3, TKW, HZ, PF
+  minValue: doublePrecision("min_value"), // Seuil minimum
+  maxValue: doublePrecision("max_value"), // Seuil maximum
+  isActive: integer("is_active").default(1), // 1 = actif, 0 = inactif
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // NOUVELLE TABLE POUR LE SPRINT FINAL

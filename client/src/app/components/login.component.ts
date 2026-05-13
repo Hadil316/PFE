@@ -8,73 +8,56 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: './login.component.html'
 })
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  email = signal('');
-  password = signal('');
-  isLoading = signal(false);
-  errorMessage = signal('');
-  isRegisterMode = signal(false);
-  registerName = signal('');
-
-  login() {
-    if (!this.email() || !this.password()) {
-      this.errorMessage.set('Veuillez remplir tous les champs');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-
-    this.authService.login(this.email(), this.password()).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        // 🔹 Utilisation de replaceUrl pour empêcher le retour arrière vers login
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'Identifiants invalides'
-        );
-      }
-    });
-  }
-
-  register() {
-    if (!this.email() || !this.password() || !this.registerName()) {
-      this.errorMessage.set('Veuillez remplir tous les champs');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-
-    this.authService.register(this.email(), this.registerName(), this.password()).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        // 🔹 Même chose pour l'inscription
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'Erreur lors de l\'inscription'
-        );
-      }
-    });
-  }
+  isLogin = true;
+  email = '';
+  password = '';
+  registerName = '';
+  
+  // Variables manquantes ajoutées pour le HTML
+  isLoading = false;
+  errorMessage = '';
 
   toggleMode() {
-    this.isRegisterMode.update(val => !val);
-    this.errorMessage.set('');
-    this.email.set('');
-    this.password.set('');
-    this.registerName.set('');
+    this.isLogin = !this.isLogin;
+    this.errorMessage = '';
+  }
+
+  login() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    const email = this.email.trim().toLowerCase();
+    const password = this.password.trim();
+
+    this.authService.login(email, password).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || 'Identifiants invalides';
+      }
+    });
+  }
+
+  handleRegister() {
+    this.isLoading = true;
+    this.authService.register(this.email, this.registerName, this.password).subscribe({
+      next: () => {
+        this.isLoading = false;
+        alert('Compte créé !');
+        this.isLogin = true;
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || 'Erreur inscription';
+      }
+    });
   }
 }

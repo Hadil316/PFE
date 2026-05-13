@@ -10,7 +10,12 @@ export class AssetsService {
   async findAll() {
     try {
       const allAssets = await this.db.select().from(schema.assets);
-      console.log("Assets mel Base:", allAssets); // <--- Tchoufha fil terminal
+      console.log("Assets mel Base:", allAssets);
+
+      if (!allAssets || allAssets.length === 0) {
+        console.log("Aucune donnée dans la table assets");
+        return [];
+      }
 
       const buildTree = (pId: number | null) => {
         return allAssets
@@ -24,8 +29,9 @@ export class AssetsService {
       const result = buildTree(null);
       console.log("Tree 7adhir:", result);
       return result;
-    } catch (e) {
-      console.error("Erreur Backend Assets:", e);
+    } catch (e: any) {
+      console.error("Erreur Backend Assets:", e.message || e);
+      console.error("Stack:", e.stack);
       return [];
     }
   }

@@ -9,106 +9,185 @@ import { AssetStateService } from '../services/asset-state.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="w-full h-full p-10 bg-[#f8fafc] overflow-y-auto">
-      <div class="mb-10 flex justify-between items-end">
+    <div class="w-full h-full p-10 bg-[#f8fafc] overflow-y-auto custom-scrollbar">
+      
+      <!-- HEADER : TITRE DÉGRADÉ ET BOUTONS PILLS -->
+      <div class="mb-10 flex justify-between items-end px-4">
         <div>
-           <h1 class="text-4xl font-black text-slate-900 tracking-tight uppercase">
-             Facture : {{ assetName() }}
-           </h1>
-           <p class="text-slate-500 font-bold italic text-sm">Basée sur les données réelles de consommation mensuelle</p>
+          <h1 class="text-4xl font-black bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight mb-2 uppercase">
+            Facture : {{ assetName() }}
+          </h1>
+          <p class="text-slate-400 font-bold italic text-sm uppercase tracking-widest">Récapitulatif financier mensuel</p>
         </div>
+        
         <div class="flex gap-4 no-print">
-          <button (click)="loadBillingData()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center gap-2">
+          <button (click)="loadBillingData()" 
+                  class="px-8 py-3 bg-cyan-500/10 text-cyan-600 border-2 border-cyan-500/20 rounded-full font-black text-[12px] uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:bg-cyan-500 hover:text-white transition-all flex items-center gap-2">
             <span>🔄</span> Recalculer
           </button>
-          <button (click)="window.print()" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2">
-            <span>🖨️</span> Imprimer
+          <button (click)="downloadPDF()" 
+                  class="px-8 py-3 bg-purple-500/10 text-purple-600 border-2 border-purple-500/20 rounded-full font-black text-[12px] uppercase shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-purple-600 hover:text-white transition-all flex items-center gap-2">
+            <span>📥</span> Télécharger PDF
           </button>
         </div>
       </div>
 
-      <!-- TABLEAU STYLE STEG -->
-      <div class="bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden max-w-5xl mx-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-800 text-white">
-              <th class="p-5 text-[10px] uppercase tracking-[0.2em]">Désignation / Libellé</th>
-              <th class="p-5 text-[10px] uppercase tracking-[0.2em] text-center">Consommation</th>
-              <th class="p-5 text-[10px] uppercase tracking-[0.2em] text-center">Prix Unitaire</th>
-              <th class="p-5 text-[10px] uppercase tracking-[0.2em] text-right">Montant (DT)</th>
-            </tr>
-          </thead>
-          <tbody class="text-slate-700 font-medium">
-            <tr class="bg-[#4ade80] text-white font-black">
-              <td colspan="3" class="p-4 px-6 italic uppercase tracking-wider">Énergie Active (kWh)</td>
-              <td class="p-4 text-right">MONTANT HT</td>
-            </tr>
-            <tr class="border-b">
-              <td class="p-4 px-10">Consommation Jour (Tarif Normal)</td>
-              <td class="p-4 text-center font-bold">{{ (bill().activeEnergy * 0.4) | number:'1.2-2' }}</td>
-              <td class="p-4 text-center">{{ bill().rateJour | number:'1.3-3' }}</td>
-              <td class="p-4 text-right font-bold">{{ (bill().activeEnergy * 0.4 * bill().rateJour) | number:'1.3-3' }}</td>
-            </tr>
-            <tr class="border-b">
-              <td class="p-4 px-10 text-blue-600">Pointe (Matin & Soir)</td>
-              <td class="p-4 text-center font-bold text-blue-600">{{ (bill().activeEnergy * 0.2) | number:'1.2-2' }}</td>
-              <td class="p-4 text-center text-blue-600">{{ bill().ratePointeMatin | number:'1.3-3' }}</td>
-              <td class="p-4 text-right font-bold text-blue-600">{{ (bill().activeEnergy * 0.2 * bill().ratePointeMatin) | number:'1.3-3' }}</td>
-            </tr>
-            <tr class="border-b">
-              <td class="p-4 px-10">Consommation Nuit</td>
-              <td class="p-4 text-center font-bold">{{ (bill().activeEnergy * 0.4) | number:'1.2-2' }}</td>
-              <td class="p-4 text-center">{{ bill().rateNuit | number:'1.3-3' }}</td>
-              <td class="p-4 text-right font-bold">{{ (bill().activeEnergy * 0.4 * bill().rateNuit) | number:'1.3-3' }}</td>
-            </tr>
-            
-            <tr class="bg-slate-50 font-black">
-              <td colspan="3" class="p-4 text-blue-800 text-right uppercase tracking-widest text-sm">Sous-Total 1 (Énergie HT)</td>
-              <td class="p-4 text-right text-blue-800 text-lg">{{ calculateEnergyHT() | number:'1.3-3' }} DT</td>
-            </tr>
+      <!-- GRAND CADRE AVEC EFFET LUMIÈRE (Glow) -->
+      <div class="max-w-5xl mx-auto bg-white/40 backdrop-blur-md rounded-[3rem] shadow-[0_0_80px_rgba(59,130,246,0.12)] border border-white p-10 mb-12">
+        
+        <div class="overflow-hidden rounded-[2rem] border border-white shadow-sm bg-white/30">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <!-- CAPTURE 1 : EN-TÊTE TRANSPARENT ET DÉGRADÉ -->
+              <tr class="bg-gradient-to-r from-cyan-400/80 to-purple-500/80 backdrop-blur-md text-white">
+                <th class="p-5 px-10 text-[10px] uppercase tracking-[0.25em] font-black italic">Désignation / Libellé</th>
+                <th class="p-5 text-[10px] uppercase tracking-[0.25em] font-black text-center italic">Consommation</th>
+                <th class="p-5 text-[10px] uppercase tracking-[0.25em] font-black text-center italic">P.U (DT)</th>
+                <th class="p-5 px-10 text-[10px] uppercase tracking-[0.25em] font-black text-right italic">Montant (DT)</th>
+              </tr>
+            </thead>
+            <tbody class="text-slate-600">
+              
+              <!-- CAPTURE 4 : ÉNERGIE ACTIVE (VERT SUPPRIMÉ -> STYLE ÉPURÉ) -->
+              <tr class="bg-white/60 border-l-[12px] border-emerald-400/50">
+                <td class="p-6 px-8 font-black uppercase text-[12px] text-emerald-600 tracking-wider">Énergie Active (kWh)</td>
+                <!-- CHIFFRES STYLE PROFESSIONNEL MONO -->
+                <td class="p-6 text-center font-mono font-black text-[#1e293b] text-xl">{{ bill().activeEnergy | number:'1.2-2' }}</td>
+                <td class="p-6 text-center text-slate-300">-</td>
+                <td class="p-6 px-10 text-right font-mono font-black text-[#1e293b] text-xl">{{ calculateEnergyHT() | number:'1.3-3' }}</td>
+              </tr>
 
-            <tr class="border-b">
-              <td class="p-4 px-6 font-bold italic">Redevance de Puissance (Prime)</td>
-              <td class="p-4 text-center">Souscription Annuelle</td>
-              <td class="p-4 text-center">11.000 / kW</td>
-              <td class="p-4 text-right font-bold">{{ bill().primePuissance | number:'1.3-3' }}</td>
-            </tr>
+              <!-- Lignes de Détails -->
+              <tr class="border-b border-white/50">
+                <td class="p-4 px-14 text-[11px] font-bold text-slate-400 uppercase italic">Consommation Jour</td>
+                <td class="p-4 text-center font-mono font-bold text-slate-600">{{ (bill().activeEnergy * 0.4) | number:'1.2-2' }}</td>
+                <td class="p-4 text-center font-mono text-slate-400 text-xs">0.290</td>
+                <td class="p-4 px-10 text-right font-mono font-bold text-slate-600">{{ (bill().activeEnergy * 0.4 * 0.29) | number:'1.3-3' }}</td>
+              </tr>
+              <tr class="border-b border-white/50">
+                <td class="p-4 px-14 text-[11px] font-bold text-blue-400/80 uppercase italic">Pointe (Matin & Soir)</td>
+                <td class="p-4 text-center font-mono font-black text-blue-700/70">{{ (bill().activeEnergy * 0.2) | number:'1.2-2' }}</td>
+                <td class="p-4 text-center font-mono font-bold text-blue-300 text-xs">0.417</td>
+                <td class="p-4 px-10 text-right font-mono font-black text-blue-700/70">{{ (bill().activeEnergy * 0.2 * 0.417) | number:'1.3-3' }}</td>
+              </tr>
+              <tr class="border-b border-white/50">
+                <td class="p-4 px-14 text-[11px] font-bold text-slate-400 uppercase italic">Consommation Nuit</td>
+                <td class="p-4 text-center font-mono font-bold text-slate-600">{{ (bill().activeEnergy * 0.4) | number:'1.2-2' }}</td>
+                <td class="p-4 text-center font-mono text-slate-400 text-xs">0.222</td>
+                <td class="p-4 px-10 text-right font-mono font-bold text-slate-600">{{ (bill().activeEnergy * 0.4 * 0.222) | number:'1.3-3' }}</td>
+              </tr>
 
-            <tr class="border-b">
-              <td colspan="3" class="p-4 px-6 font-bold">TVA sur Consommation (19%)</td>
-              <td class="p-4 text-right font-bold text-red-500">{{ calculateTVA() | number:'1.3-3' }}</td>
-            </tr>
+              <!-- Redevance -->
+              <tr class="border-b border-white/50 bg-slate-50/30">
+                <td class="p-6 px-8 font-black text-slate-400 text-[11px] uppercase tracking-widest">Redevance Puissance</td>
+                <td class="p-6 text-center text-[10px] text-slate-300 font-bold uppercase italic">Forfait Annuel</td>
+                <td class="p-6 text-center font-mono font-bold text-slate-400 text-xs">11.000</td>
+                <td class="p-6 px-10 text-right font-mono font-black text-[#1e293b] text-lg">{{ bill().primePuissance | number:'1.3-3' }}</td>
+              </tr>
 
-            <tr class="bg-slate-900 text-white font-black">
-              <td colspan="3" class="p-8 text-2xl uppercase tracking-[0.3em]">Total Net à Payer (TTC)</td>
-              <td class="p-8 text-3xl text-right text-emerald-400">
-                {{ calculateTotal() | number:'1.3-3' }} DT
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              <!-- TVA -->
+              <tr class="bg-red-50/5 border-b border-white/50">
+                <td colspan="3" class="p-5 px-8 font-black text-[11px] text-slate-300 uppercase tracking-widest">TVA sur Consommation (19%)</td>
+                <td class="p-5 px-10 text-right font-mono font-black text-red-400/80 text-lg">{{ calculateTVA() | number:'1.3-3' }}</td>
+              </tr>
+
+              <!-- CAPTURE 2 : TOTAL AVEC DÉGRADÉ ET TRANSPARENCE -->
+              <tr class="bg-gradient-to-r from-cyan-400/90 to-purple-600/90 text-white shadow-2xl">
+                <td colspan="3" class="p-6 px-10 text-xl font-black uppercase tracking-[0.4em] italic">Total Net TTC</td>
+                <td class="p-6 px-10 text-right">
+                  <span class="text-4xl font-mono font-black italic tracking-tighter">{{ calculateTotal() | number:'1.3-3' }}</span>
+                  <small class="text-[10px] uppercase font-bold ml-2 opacity-70 italic">DT</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-8 flex justify-between items-center opacity-30 px-4">
+          <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">Volt EMS Intelligence v2.0</p>
+          <div class="w-24 h-px bg-slate-400"></div>
+        </div>
       </div>
-      
-      <p class="mt-8 text-xs text-slate-400 text-center uppercase tracking-widest font-bold">
-        Système de Gestion d'Énergie VOLT EMS - PFE 2024
-      </p>
     </div>
   `,
   styles: [`
+    :host { display: block; width: 100%; height: 100%; }
     @media print {
-      .no-print { display: none !important; }
-      .p-10 { padding: 0 !important; }
-      body { background: white !important; }
+      /* Hide everything by default */
+      * { visibility: hidden; }
+      
+      /* Show only the invoice frame and its contents */
+      :host, :host * { visibility: visible; }
+      
+      :host { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: white !important; 
+        z-index: 9999;
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Hide header and buttons */
+      .mb-10, .mb-12 { display: none !important; }
+      
+      /* Style the invoice frame */
+      .max-w-5xl { 
+        max-width: 100% !important; 
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      .bg-white\\/40, .bg-white\\/30 {
+        background: white !important; 
+        border: 2px solid #333 !important; 
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 20px !important;
+      }
+      
+      /* Ensure table is visible */
+      table, thead, tbody, tr, th, td { 
+        visibility: visible !important;
+      }
+      
+      thead tr {
+        background: #333 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      tr { 
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      tr.bg-white\\/60 {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      body { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+      }
     }
   `]
 })
 export class BillingComponent implements OnInit {
   private http = inject(HttpClient);
-  public authService = inject(AuthService); // Nom corrigé ici
+  public authService = inject(AuthService);
   private assetService = inject(AssetStateService);
   window = window;
 
-  assetName = signal<string>('Non sélectionné');
+  assetName = signal<string>('Équipement');
   bill = signal<any>({ 
     activeEnergy: 0, 
     rateJour: 0.290, 
@@ -124,7 +203,7 @@ export class BillingComponent implements OnInit {
 
   loadBillingData() {
     const selected = this.assetService.selectedAsset();
-    const id = selected ? selected.id : 3; // On prend l'ID sélectionné ou l'ID 3 par défaut
+    const id = selected ? selected.id : 3; 
     this.assetName.set(selected ? selected.name : 'TGBT Principal');
 
     const token = this.authService.getToken();
@@ -133,10 +212,7 @@ export class BillingComponent implements OnInit {
     this.http.get<any>(`http://localhost:3000/measurements/billing/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     }).subscribe(res => {
-      if (res) {
-        this.bill.set(res);
-        console.log("Facture mise à jour : ", res);
-      }
+      if (res) this.bill.set(res);
     });
   }
 
@@ -152,7 +228,116 @@ export class BillingComponent implements OnInit {
   }
 
   calculateTotal() {
-    const surchargeMunicipale = this.bill().activeEnergy * 0.005;
-    return this.calculateEnergyHT() + this.bill().primePuissance + this.calculateTVA() + surchargeMunicipale;
+    return this.calculateEnergyHT() + this.bill().primePuissance + this.calculateTVA();
+  }
+
+  downloadPDF() {
+    const b = this.bill();
+    const name = this.assetName();
+    
+    // Generate HTML content for the invoice
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Facture - ${name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; background: white; }
+    .invoice-box { max-width: 800px; margin: 0 auto; padding: 40px; border: 2px solid #333; border-radius: 10px; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0ea5e9; }
+    .header h1 { font-size: 32px; color: #0ea5e9; margin-bottom: 10px; }
+    .header p { color: #64748b; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+    th { background: #333; color: white; padding: 12px; text-align: left; font-weight: 700; }
+    th:nth-child(2), th:nth-child(3), th:nth-child(4) { text-align: center; }
+    td { padding: 10px; border: 1px solid #ddd; }
+    td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: center; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .total-row { background: #0ea5e9 !important; color: white; font-weight: 700; }
+    .total-row td { border: none; }
+    .footer { margin-top: 30px; text-align: center; color: #94a3b8; font-size: 11px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="invoice-box">
+    <div class="header">
+      <h1>⚡ FACTURE</h1>
+      <p>Équipement: ${name} | Date: ${new Date().toLocaleDateString('fr-FR')}</p>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Désignation / Libellé</th>
+          <th>Consommation</th>
+          <th>P.U (DT)</th>
+          <th>Montant (DT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Énergie Active (kWh)</strong></td>
+          <td>${b.activeEnergy?.toFixed(2) || '0.00'}</td>
+          <td>-</td>
+          <td>${this.calculateEnergyHT().toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Consommation Jour</td>
+          <td>${(b.activeEnergy * 0.4).toFixed(2)}</td>
+          <td>0.290</td>
+          <td>${(b.activeEnergy * 0.4 * 0.29).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Pointe (Matin & Soir)</td>
+          <td>${(b.activeEnergy * 0.2).toFixed(2)}</td>
+          <td>0.417</td>
+          <td>${(b.activeEnergy * 0.2 * 0.417).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td style="padding-left: 30px;">Consommation Nuit</td>
+          <td>${(b.activeEnergy * 0.4).toFixed(2)}</td>
+          <td>0.222</td>
+          <td>${(b.activeEnergy * 0.4 * 0.222).toFixed(3)}</td>
+        </tr>
+        <tr>
+          <td><strong>Prime Puissance (DT)</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td>${b.primePuissance?.toFixed(3) || '0.000'}</td>
+        </tr>
+        <tr>
+          <td><strong>TVA (19%)</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td>${this.calculateTVA().toFixed(3)}</td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>TOTAL TTC</strong></td>
+          <td>-</td>
+          <td>-</td>
+          <td><strong>${this.calculateTotal().toFixed(3)} DT</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div class="footer">
+      <p>Document généré par le système EMS - Energy Management System</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Facture_${name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 }

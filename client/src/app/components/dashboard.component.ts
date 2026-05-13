@@ -26,6 +26,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     timestamp: new Date()
   });
 
+  // Notification signals
+  showNotification = signal<boolean>(false);
+  notificationMessage = signal<string>('');
+  alertNotificationCount = signal<number>(0);
+  private notificationTimeout: any;
+  private lastAlertId: number | null = null;
+
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       const id = Number(params['id']);
@@ -52,8 +59,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }).subscribe(res => {
         if (res) this.liveData.set({ ...res, timestamp: new Date() });
       });
+      // Check for new alerts
+      this.checkForNewAlerts();
     }, 2000);
   }
 
   ngOnDestroy() { if (this.monitorInterval) clearInterval(this.monitorInterval); }
+
+  private checkForNewAlerts() {
+    this.http.get<any>('http://localhost:3000/measurements/alerts/latest', {
+      headers: { 'Authorization': `Bearer ${this.authService.getToken()}` }
+    }).subscribe(alert => {
+      if (alert && alert.id !== this.lastAlertId) {
+        this.lastAlertId = alert.id;
+        this.showAlertNotification(alert);
+      }
+    });
+  }
+
+  private showAlertNotification(alert: any) {
+    this.alertNotificationCount.update(count => count + 1);
+    const alertIndex = this.alertNotificationCount();
+    const dateStr = new Date(alert.timestamp).toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const timeStr = new Date(alert.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const message = `ALERTE ${alertIndex} / ${this.alertNotificationCount()} : ${alert.message} sur ${alert.assetName} – ${alert.value}A (Seuil ${alert.threshold}A)`;
+
+    this.notificationMessage.set(message);
+    this.showNotification.set(true);
+
+    if (this.notificationTimeout) clearTimeout(this.notificationTimeout);
+    this.notificationTimeout = setTimeout(() => {
+      this.showNotification.set(false);
+    }, 3000);
+  }
 }

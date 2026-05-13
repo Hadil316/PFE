@@ -2,43 +2,96 @@
 .parallax-container {
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Garantit que l'interface ne bouge pas */
+  overflow: hidden;
 }
 
-/* J'ai supprimé la classe .parallax-bg car elle créait du mouvement et forçait le scroll. 
-   L'image de fond utilise maintenant les classes Tailwind (w-full h-full object-cover) 
-   directement dans le HTML pour rester parfaitement fixe. */
-
-/* Carte Glassmorphism */
+/* Carte Glassmorphism - Bleu ciel transparent */
 .glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(224, 242, 254, 0.12);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border-radius: 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 40px 0 rgba(56, 189, 248, 0.15), inset 0 1px 0 0 rgba(186, 230, 253, 0.3);
+  border: 1px solid rgba(186, 230, 253, 0.25);
 }
 
-/* Reste des styles Premium intouchés */
-.input-premium {
-  width: 100%;
-  padding: 18px 24px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 18px;
-  font-size: 14px;
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
+}
+
+/* ===== PREMIUM FIELD FRAMES ===== */
+.field-wrapper {
+  position: relative;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #bae6fd;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.field-frame {
+  position: relative;
+  background: rgba(224, 242, 254, 0.15);
+  border-radius: 20px;
+  padding: 4px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(186, 230, 253, 0.2);
+}
+
+.field-frame:focus-within {
+  background: rgba(224, 242, 254, 0.25);
+  box-shadow: 
+    0 0 0 3px rgba(56, 189, 248, 0.2),
+    0 4px 15px rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.field-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7dd3fc;
+  z-index: 10;
   transition: all 0.3s ease;
 }
 
-.input-premium:focus {
-  outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+.field-frame:focus-within .field-icon {
+  color: #0ea5e9;
 }
 
+.field-input {
+  width: 100%;
+  padding: 16px 20px 16px 48px;
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.field-input:focus {
+  outline: none;
+}
+
+.field-input::placeholder {
+  color: #7dd3fc;
+}
+
+/* ===== SUBMIT BUTTON ===== */
 .submit-btn {
   width: 100%;
-  background: #0ea5e9;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   color: white;
   padding: 20px;
   border-radius: 20px;
@@ -52,6 +105,11 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #0284c7;
   transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(14, 165, 233, 0.5);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

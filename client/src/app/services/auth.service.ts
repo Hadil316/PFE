@@ -1,89 +1,73 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError } from 'rxjs';
-import { AuthResponse } from '../model/auth-response.model';
-import { User } from '../model/user.model';
+import { BehaviorSubject, tap } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
-  private API_URL = 'http://localhost:3000/auth';
+  private apiUrl = 'http://localhost:3000/auth';
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  currentUser$ = this.currentUserSubject.asObservable();
+  private currentUserSubject = new BehaviorSubject<any>(JSON.parse(localStorage.getItem('user') || 'null'));
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
-  isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  public get currentUserValue() { return this.currentUserSubject.value; }
 
-  constructor() {
-    this.loadStoredUser();
-  }
-  
-  login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/login`, { email, password }).pipe(
-      tap((response: AuthResponse) => {
-        localStorage.setItem('auth_token', response.access_token);
-        localStorage.setItem('current_user', JSON.stringify(response.user));
-        this.currentUserSubject.next(response.user);
-        this.isAuthenticatedSubject.next(true);
-      }),
-      catchError((error) => {
-        console.error('Login failed:', error);
-        throw error;
-      })
-    );
-  }
-
-  register(email: string, username: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/register`, { email, username, password }).pipe(
-      tap((response: AuthResponse) => {
-        localStorage.setItem('auth_token', response.access_token);
-        localStorage.setItem('current_user', JSON.stringify(response.user));
-        this.currentUserSubject.next(response.user);
-        this.isAuthenticatedSubject.next(true);
-      })
-    );
-  }
-
-  logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('current_user');
-    this.currentUserSubject.next(null);
-    this.isAuthenticatedSubject.next(false);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('auth_token');
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  
-  getCurrentUser() {
-  const user = localStorage.getItem('current_user');
-  return user ? JSON.parse(user) : null;
-  }
+  isAuthenticated(): boolean { return !!localStorage.getItem('auth_token'); }
 
   isAdmin(): boolean {
-  const user = this.getCurrentUser();
-  console.log('USER=', user);
-  return user?.role?.trim().toUpperCase() === 'ADMIN';
-}
+    const role = this.currentUserValue?.role?.toUpperCase();
+    return role === 'ADMIN';
+  }
 
-  private loadStoredUser(): void {
-    const storedUser = localStorage.getItem('current_user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-        this.isAuthenticatedSubject.next(true);
-      } catch (e) {
-        localStorage.removeItem('current_user');
-      }
+  updateLocalUserData(newInfo: any) {
+    const updatedUser = { ...this.currentUserValue, ...newInfo };
+    this.currentUserSubject.next(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  }
+
+  login(email: string, password: string) {
+    return this.http.post<any>(`${this.apiUrl}/login`, { email, password }).pipe(
+      tap(res => {
+        if (res.access_token) {
+          localStorage.setItem('auth_token', res.access_token);
+          localStorage.setItem('user', JSON.stringify(res.user));
+          this.currentUserSubject.next(res.user);
+        }
+      })
+    );
+  }
+
+  register(email: string, username: string, password: string) {
+    return this.http.post(`${this.apiUrl}/register`, { email, username, password });
+  }
+
+  getToken() { return localStorage.getItem('auth_token'); }
+
+  hasPermission(code: string): boolean {
+    if (this.isAdmin()) {
+      return true;
     }
+    const permissions = this.currentUserValue?.permissions ?? [];
+    return permissions.includes(code);
+  }
+
+  logout() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    this.currentUserSubject.next(null);
+  }
+
+  updateProfile(userId: number, data: { username: string; email: string }) {
+    return this.http.patch<any>(`http://localhost:3000/users/${userId}`, data).pipe(
+      tap(res => {
+        if (res && res[0]) {
+          this.updateLocalUserData(res[0]);
+        }
+      })
+    );
+  }
+
+  updatePassword(userId: number, password: string) {
+    return this.http.patch<any>(`http://localhost:3000/users/${userId}/password`, { password });
   }
 }

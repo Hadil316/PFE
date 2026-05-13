@@ -8,9 +8,31 @@ export class MeasurementsService {
   constructor(@Inject(DATABASE_CONNECTION) private db: any) {}
 
   async create(data: any) {
-    const finalData = { ...data, timestamp: data.timestamp ? new Date(data.timestamp) : new Date() };
-    return await this.db.insert(schema.measurements).values(finalData).returning();
-  }
+  return await this.db.insert(schema.measurements).values({
+    assetId: Number(data.assetId),
+
+    V1N: Number(data.V1N),
+    V2N: Number(data.V2N),
+    V3N: Number(data.V3N),
+
+    V12: Number(data.V12),
+    V23: Number(data.V23),
+    V31: Number(data.V31),
+
+    I1: Number(data.I1),
+    I2: Number(data.I2),
+    I3: Number(data.I3),
+
+    TKW: Number(data.TKW),
+    IKWH: Number(data.IKWH),
+
+    HZ: Number(data.HZ),
+    PF: Number(data.PF) || Number(data.cos_phi) || 0.95,
+    KVAH: Number(data.KVAH),
+
+    timestamp: new Date()
+  }).returning();
+}
 
   async findLatest(assetId: number) {
     const allAssets = await this.db.select().from(schema.assets);
@@ -77,6 +99,14 @@ export class MeasurementsService {
       id: schema.alerts.id, assetName: schema.assets.name, message: schema.alerts.message,
       value: schema.alerts.value, threshold: schema.alerts.threshold, timestamp: schema.alerts.timestamp,
     }).from(schema.alerts).leftJoin(schema.assets, eq(schema.alerts.assetId, schema.assets.id)).orderBy(desc(schema.alerts.timestamp));
+  }
+
+  async findLatestAlert() {
+    const result = await this.db.select({
+      id: schema.alerts.id, assetName: schema.assets.name, message: schema.alerts.message,
+      value: schema.alerts.value, threshold: schema.alerts.threshold, timestamp: schema.alerts.timestamp,
+    }).from(schema.alerts).leftJoin(schema.assets, eq(schema.alerts.assetId, schema.assets.id)).orderBy(desc(schema.alerts.timestamp)).limit(1);
+    return result[0] || null;
   }
 
   async calculateBilling(assetId: number) {

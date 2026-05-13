@@ -1,122 +1,163 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule],
-  templateUrl: './user-management.component.html',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './user-management.component.html'
 })
 export class UserManagementComponent implements OnInit {
   private http = inject(HttpClient);
+  public authService = inject(AuthService);
 
   users = signal<any[]>([]);
-  showModal = false;
-  showDeleteModal = false;
-  isEditMode = false;
-  passwordVisible = false;
-  userToDeleteId: number | null = null;
-  visiblePasswords: { [key: number]: boolean } = {};
-  userForm = { id: null, username: '', email: '', password: '', role: 'UTILISATEUR' };
+  availablePermissions = signal<any[]>([]);
+  
+  // --- Signaux pour les Fenêtres (Modals) ---
+  showUserModal = signal(false);
+  showDeleteModal = signal(false);
+  isEditMode = signal(false);
+  
+  // Formulaire
+  userForm = signal({ 
+    id: null as number | null, 
+    username: '', 
+    email: '', 
+    password: '', 
+    role: 'AGENT',
+    permissionIds: [] as number[]
+  });
+  
+  userToDelete = signal<any>(null);
 
   ngOnInit() {
-    this.fetchUsers();
+    this.loadUsers();
+    this.loadPermissions();
   }
 
-  fetchUsers() {
-    this.http.get<any[]>('http://localhost:3000/users').subscribe({
-      next: (res) => this.users.set(res),
-      error: (err) => console.error('Erreur lors de la récupération des utilisateurs', err),
+  loadUsers() {
+    const token = this.authService.getToken();
+    this.http.get<any[]>('http://localhost:3000/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe(res => this.users.set(res));
+  }
+
+  loadPermissions() {
+    const token = this.authService.getToken();
+    this.http.get<any[]>('http://localhost:3000/users/permissions/all', {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe({
+      next: (res) => {
+        console.log('Permissions loaded:', res);
+        this.availablePermissions.set(res);
+      },
+      error: (err) => {
+        console.error('Error loading permissions:', err);
+        // Set default permissions if API fails
+        this.availablePermissions.set([
+          { id: 1, code: 'VIEW_DASHBOARD', name: 'Voir le tableau de bord', description: 'Accès au tableau de bord principal' },
+          { id: 2, code: 'VIEW_CONSUMPTION', name: 'Voir la consommation', description: 'Voir les données temps réel et historiques' },
+          { id: 3, code: 'VIEW_ALERTS', name: 'Voir les alertes', description: 'Voir les alertes et anomalies' },
+          { id: 4, code: 'VIEW_REPORTS', name: 'Voir les rapports', description: 'Accès aux rapports mensuels/annuels' },
+          { id: 5, code: 'VIEW_INVOICES', name: 'Voir les factures', description: 'Accès aux factures et facturation' },
+          { id: 6, code: 'MANAGE_THRESHOLDS', name: 'Gérer les seuils', description: 'Modifier les seuils d\'alerte' },
+          { id: 7, code: 'MANAGE_ASSETS', name: 'Gérer les équipements', description: 'Créer/modifier/supprimer les équipements' },
+          { id: 8, code: 'MANAGE_USERS', name: 'Gérer les utilisateurs', description: 'Créer/modifier/supprimer les utilisateurs' },
+          { id: 9, code: 'EXPORT_DATA', name: 'Exporter les données', description: 'Exporter les données en CSV/PDF' },
+          { id: 10, code: 'VIEW_BILLING', name: 'Voir la facturation', description: 'Accès aux détails de facturation' }
+        ]);
+      }
     });
   }
 
-  togglePassword(id: number) {
-    this.visiblePasswords[id] = !this.visiblePasswords[id];
+  // --- ACTIONS DES BOUTONS ---
+
+  openAdd() {
+    this.isEditMode.set(false);
+    this.userForm.set({ id: null, username: '', email: '', password: '', role: 'AGENT', permissionIds: [] });
+    this.showUserModal.set(true);
   }
 
-  openAddModal() {
-    this.isEditMode = false;
-    this.userForm = { id: null, username: '', email: '', password: '', role: 'UTILISATEUR' };
-    this.showModal = true;
+  openEdit(user: any) {
+    this.isEditMode.set(true);
+    const token = this.authService.getToken();
+    // Charger les permissions de l'utilisateur
+    this.http.get<any[]>(`http://localhost:3000/users/${user.id}/permissions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe(perms => {
+      const permIds = perms.map(p => p.id);
+      this.userForm.set({ ...user, password: '', permissionIds: permIds });
+      this.showUserModal.set(true);
+    });
   }
 
-  openEditModal(user: any) {
-    this.isEditMode = true;
-    this.userForm = { ...user };
-    this.showModal = true;
+  askDelete(user: any) {
+    this.userToDelete.set(user);
+    this.showDeleteModal.set(true);
+  }
+
+  togglePermission(permissionId: number) {
+    const form = this.userForm();
+    const perms = form.permissionIds;
+    if (perms.includes(permissionId)) {
+      form.permissionIds = perms.filter(id => id !== permissionId);
+    } else {
+      form.permissionIds = [...perms, permissionId];
+    }
+    this.userForm.set({ ...form });
   }
 
   saveUser() {
-    if (this.isEditMode) {
-      this.http.patch(`http://localhost:3000/users/${this.userForm.id}`, this.userForm)
-        .subscribe(() => { this.fetchUsers(); this.showModal = false; });
-    } else {
-      const { id, ...data } = this.userForm;
-      this.http.post('http://localhost:3000/users', data)
-        .subscribe(() => { this.fetchUsers(); this.showModal = false; });
-    }
-  }
+    const data = this.userForm();
+    const token = this.authService.getToken();
+    const headers = { Authorization: `Bearer ${token}` };
+    const payload: any = { ...data, permissions: data.permissionIds };
+    delete payload.permissionIds;
 
-  askDelete(id: number) {
-    this.userToDeleteId = id;
-    this.showDeleteModal = true;
+    if (this.isEditMode()) {
+      this.http.patch(`http://localhost:3000/users/${data.id}`, payload, { headers })
+        .subscribe(() => { this.loadUsers(); this.showUserModal.set(false); });
+    } else {
+      this.http.post('http://localhost:3000/users', payload, { headers })
+        .subscribe(() => { this.loadUsers(); this.showUserModal.set(false); });
+    }
   }
 
   confirmDelete() {
-    if (this.userToDeleteId) {
-      this.http.delete(`http://localhost:3000/users/${this.userToDeleteId}`)
-        .subscribe(() => { this.fetchUsers(); this.showDeleteModal = false; });
-    }
+    const user = this.userToDelete();
+    if (!user) return;
+    const token = this.authService.getToken();
+    this.http.delete(`http://localhost:3000/users/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).subscribe(() => {
+      this.loadUsers();
+      this.showDeleteModal.set(false);
+    });
   }
 
-  // CORRECTION : Fonction pour afficher le libellé du rôle correctement
-  getRoleLabel(role: string): string {
-    // Convertir en minuscule pour la comparaison (insensible à la casse)
-    const roleLower = (role || '').toLowerCase();
-    
-    switch(roleLower) {
-      case 'admin':
-        return 'Admin';
-      case 'responsable_energie':
-        return 'Resp. Énergie';
-      case 'utilisateur':
-        return 'Agent';
-      default:
-        return role || 'Agent';
-    }
+  isPermissionSelected(permissionId: number): boolean {
+    return this.userForm().permissionIds.includes(permissionId);
   }
 
-  // CORRECTION : Fonction pour obtenir la classe CSS du rôle
-  getRoleClass(role: string): string {
-    const roleLower = (role || '').toLowerCase();
+  getPermissionsByRole(role: string): any[] {
+    const perms = this.availablePermissions();
+    console.log('Getting permissions for role:', role, 'Available:', perms);
     
-    switch(roleLower) {
-      case 'admin':
-        return 'bg-purple-600';
-      case 'responsable_energie':
-        return 'bg-teal-600';
-      case 'utilisateur':
-        return 'bg-blue-600';
-      default:
-        return 'bg-slate-600';
-    }
-  }
-
-  // CORRECTION : Fonction pour obtenir la classe du badge
-  getBadgeClass(role: string): string {
-    const roleLower = (role || '').toLowerCase();
+    if (!perms || perms.length === 0) return [];
     
-    switch(roleLower) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-700';
-      case 'responsable_energie':
-        return 'bg-teal-100 text-teal-700';
-      case 'utilisateur':
-        return 'bg-blue-100 text-blue-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
+    const normalizedRole = role?.toUpperCase().replace(/\s+/g, '_');
+    
+    if (normalizedRole === 'AGENT') {
+      return perms.filter(p => ['VIEW_DASHBOARD', 'VIEW_CONSUMPTION', 'VIEW_ALERTS'].includes(p.code));
+    } else if (['RESPONSABLE_ENERGIE', 'RESP_ENERGIE'].includes(normalizedRole)) {
+      return perms.filter(p => ['VIEW_DASHBOARD', 'VIEW_CONSUMPTION', 'VIEW_REPORTS', 'VIEW_INVOICES', 'MANAGE_THRESHOLDS', 'VIEW_ALERTS', 'EXPORT_DATA'].includes(p.code));
+    } else if (normalizedRole === 'ADMIN') {
+      return perms; // ADMIN a accès à tout
     }
+    return [];
   }
 }
